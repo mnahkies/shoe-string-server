@@ -1,0 +1,148 @@
+version: "3.9"
+networks:
+  monitoring:
+    driver: bridge
+  internal:
+    driver: bridge
+  main:
+    external: true
+    name: main
+services:
+  haproxy_public:
+    image: haproxy:2.4-alpine
+    hostname: haproxy-public
+    container_name: proxy_public
+    networks:
+      - main
+    ports:
+      - 80:80
+      - 443:443
+    ulimits:
+      nofile: 10240
+    volumes:
+    - type: bind
+      source: ${DATA_BASE_PATH}/haproxy-public
+      target: /usr/local/etc/haproxy
+      read_only: true
+    - type: bind
+      source: ${DATA_BASE_PATH}/haproxy-public-ssl
+      target: /usr/local/etc/ssl/certs
+      read_only: true
+    - type: bind
+      source: ${DATA_BASE_PATH}/haproxy-public-stats
+      target: /var/lib/haproxy-socket
+      read_only: false
+  haproxy_internal:
+    image: haproxy:2.4-alpine
+    hostname: haproxy-internal
+    container_name: proxy_internal
+    networks:
+      - internal
+      - monitoring
+    ports:
+      - 8080:80
+    ulimits:
+      nofile: 10240
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/haproxy-internal
+        target: /usr/local/etc/haproxy
+        read_only: true
+  influxdb:
+    image: influxdb:1.8-alpine
+    hostname: influxdb
+    container_name: monitoring_influxdb
+    networks:
+      - monitoring
+    healthcheck:
+      test: [ "CMD", "influx", "ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      INFLUXDB_DB: metrics
+      INFLUXDB_HTTP_AUTH_ENABLED: "false"
+      DOCKER_INFLUXDB_INIT_RETENTION:
+      INFLUXDB_ADMIN_USER: ${INFLUXDB_ADMIN_USER}
+      INFLUXDB_ADMIN_PASSWORD: ${INFLUXDB_ADMIN_PASSWORD}
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/influxdb
+        target: /var/lib/influxdb
+  telegraf:
+    image: telegraf:1.18-alpine
+    hostname: telegraf
+    container_name: monitoring_telegraf
+    networks:
+      - monitoring
+    depends_on:
+      - influxdb
+      - haproxy_public
+    environment:
+      HOST_PROC: /rootfs/proc
+      HOST_SYS: /rootfs/sys
+      HOST_ETC: /rootfs/etc
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/telegraf
+        target: /etc/telegraf
+        read_only: true
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        read_only: true
+      - type: bind
+        source: ${DATA_BASE_PATH}/haproxy-public-stats
+        target: /var/run/haproxy-public-stats
+        read_only: true
+      - type: bind
+        source: /sys
+        target: /rootfs/sys
+        read_only: true
+      - type: bind
+        source: /proc
+        target: /rootfs/proc
+        read_only: true
+      - type: bind
+        source: /etc
+        target: /rootfs/etc
+        read_only: true
+      - type: bind
+        source: /run/utmp
+        target: /var/run/utmp
+  grafana:
+    image: grafana/grafana:7.5.6
+    hostname: grafana
+    container_name: monitoring_grafana
+    networks:
+      - monitoring
+    user: "1000:1000"
+    depends_on:
+      - influxdb
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/grafana
+        target: /var/lib/grafana
+  verdaccio:
+    image: verdaccio/verdaccio:5.1
+    hostname: verdaccio
+    container_name: registry_npm
+    networks:
+      - internal
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/verdaccio/storage
+        target: /verdaccio/storage
+      - type: bind
+        source: ${DATA_BASE_PATH}/verdaccio/conf
+        target: /verdaccio/conf
+  docker:
+    image: registry:2
+    hostname: docker
+    container_name: registry_docker
+    networks:
+      - internal
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/docker/storage
+        target: /var/lib/registry

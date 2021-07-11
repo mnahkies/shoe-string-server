@@ -1,0 +1,46 @@
+global
+    log         127.0.0.1 local2
+    maxconn     4000
+
+resolvers docker_resolver
+    nameserver dns 127.0.0.11:53
+
+#---------------------------------------------------------------------
+# common defaults that all the 'listen' and 'backend' sections will
+# use if not designated in their block
+#---------------------------------------------------------------------
+defaults
+    mode                    http
+    log                     global
+    option                  httplog
+    option                  dontlognull
+    option http-server-close
+    option forwardfor       except 127.0.0.0/8
+    option                  redispatch
+    retries                 3
+    timeout http-request    10s
+    timeout queue           1m
+    timeout connect         10s
+    timeout client          1m
+    timeout server          1m
+    timeout http-keep-alive 10s
+    timeout check           10s
+    maxconn                 3000
+
+    # allows proxy to start immediately when some/all backends are not available
+    default-server init-addr none
+
+#---------------------------------------------------------------------
+# main frontend which proxys to the backends
+#---------------------------------------------------------------------
+frontend  main
+     bind *:80
+
+{{USE_BACKENDS}}
+
+    default_backend             no-match
+
+{{BACKENDS}}
+
+backend no-match
+    http-request deny deny_status 400

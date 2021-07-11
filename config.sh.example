@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+export DATA_BASE_PATH=/home/user/data
+export INFLUXDB_ADMIN_USER=admin
+export INFLUXDB_ADMIN_PASSWORD=admin
+export LETS_ENCRYPT_EMAIL_ADDRESS=support@example.com
