@@ -57,11 +57,11 @@ Please feel free to fork and customize to your hearts desire though :)
   it has been tested on Fedora 34 and AWS Linux 2.
   
 ## Setup
-1. Install `docker` / `docker-compose` (`./init/install-dependencies.sh`, or manually)
-2. Clone repo to somewhere on host or otherwise place the contents on the server
-3. Bootstrap data/configuration structure using `./init/create-empty-configuration-structure.sh /path/to/store/`
-4. Configure initial applications in the created configuration structure, and adjust templates/config as needed
-5. Update `./config.sh` with appropriate values
+1. Clone repo to somewhere on host or otherwise place the contents on the server
+2. Install `docker` / `docker-compose` (`./init/install-dependencies.sh`, or manually)
+3. Create `config.sh` from `config.sh.example`
+4. Bootstrap data/configuration structure using `./init/create-empty-configuration-structure.sh`
+5. Configure initial applications in the created configuration structure, and adjust templates/config as needed
 6. Run ./start.sh
 
 ## Usage / Scripts reference

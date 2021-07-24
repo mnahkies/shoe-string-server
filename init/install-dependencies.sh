@@ -13,8 +13,7 @@
 # might be less recent
 #bash <(curl -fsSL https://get.docker.com)
 sudo yum update -y
-sudo yum -y install docker
-
+sudo yum -y install docker bash-completion
 sudo groupadd docker
 sudo usermod -aG docker $USER
 
@@ -30,4 +29,14 @@ sudo chmod +x /usr/local/bin/docker-compose
 docker version
 docker-compose --version
 
-docker run --rm -it hello-world
+sudo docker run --rm hello-world
+
+# install docker shell completion
+sudo curl \
+  -L https://raw.githubusercontent.com/docker/docker-ce/master/components/cli/contrib/completion/bash/docker \
+  -o /etc/bash_completion.d/docker.sh
+
+# install docker-compose shell completion
+sudo curl \
+  -L https://raw.githubusercontent.com/docker/compose/master/contrib/completion/bash/docker-compose \
+  -o /etc/bash_completion.d/docker-compose
