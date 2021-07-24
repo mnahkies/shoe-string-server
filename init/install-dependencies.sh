@@ -9,7 +9,7 @@
 # install and configure these manually, or via ansible etc, for
 # greater control over the particulars.
 
-curl -fsSL https://get.docker.com -o get-docker.sh
+bash <(curl -fsSL https://get.docker.com)
 
 sudo groupadd docker
 sudo usermod -aG docker $USER
