@@ -10,6 +10,6 @@ source "${__dir}"/config.sh
 docker network prune -f
 docker network create --driver=bridge main || true
 
-docker-compose up -d --force
+docker-compose -f "${__dir}"/docker-compose.yaml up -d --force
 
 "${__dir}"/applications/watchdog.sh
