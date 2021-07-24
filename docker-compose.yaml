@@ -15,8 +15,8 @@ services:
     networks:
       - main
     ports:
-      - 80:80
-      - 443:443
+      - "${PUBLIC_IP}:80:80"
+      - "${PUBLIC_IP}:443:443"
     ulimits:
       nofile: 10240
     volumes:
@@ -40,7 +40,7 @@ services:
       - internal
       - monitoring
     ports:
-      - 8080:80
+      - "${PRIVATE_IP}:${PRIVATE_PORT}:80"
     ulimits:
       nofile: 10240
     volumes:
