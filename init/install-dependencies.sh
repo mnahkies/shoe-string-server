@@ -9,7 +9,11 @@
 # install and configure these manually, or via ansible etc, for
 # greater control over the particulars.
 
-bash <(curl -fsSL https://get.docker.com)
+# Amazon Linux 2 is not supported - use yum version instead, though
+# might be less recent
+#bash <(curl -fsSL https://get.docker.com)
+sudo yum update -y
+sudo yum -y install docker
 
 sudo groupadd docker
 sudo usermod -aG docker $USER
