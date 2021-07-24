@@ -33,7 +33,8 @@ Please feel free to fork and customize to your hearts desire though :)
 ## Features
 - Public ingress on port 80 using haproxy
 
-- Internal/private service ingress on port 8080 using haproxy
+- Internal/private service ingress on configured port and ip address using haproxy
+  - I recommend using `wireguard` or similar to bind this to a private ip address
 
 - Private Docker registry
 
@@ -71,6 +72,7 @@ but you should probably read through them before attempting to use in production
 ### `./config.sh`
 - Contains the path to the directory containing all configuration files, and other storage.
 - Contains credentials to be used for things like `influxdb` and `postgres` users.
+- Contains the ip address and port to bind to for the ingresses
 
 ### `./start.sh`
 - Generates haproxy configuration
@@ -105,14 +107,77 @@ desired `docker` tag to be executed.
 TODO: write documentation
 
 ## Accessing internal services
-The ingress on 8080 is intended to be private, ensure you have a firewall in place that
-only allows http(s) traffic on 80/443
+There are two main options for configuring this securely:
+- Bind to private ip address and access via VPN
+- Bind to localhost / **firewalled** port and access via SSH tunnel
 
-Currently, there is no SSL setup on the internal ingress, it is assumed that you will connect 
-to this securely over a VPN or SSH tunnel for now.
+**Note:** these services are only exposed over `http` but I might add support for
+exposing them over `https` as well since `docker` in particular gets a bit naggy about "insecure"
+registries. It is assumed that you will only make them accessible via secure channels
+like the examples below.
 
-The services are available via port 8080, with the domains configured in the `haproxy-internal/applications.js`
-file. At this stage the easiest way to make this available in your browser is to add entries to your
+### VPN Wireguard example
+**Prerequisites:** `wireguard-tools` installed, Linux kernel >= 5.6 or `wireguard` installed as a kernel module.
+If you're not using Linux on both ends then you'll need to consult your platforms documentation.
+
+1. On both host and client generate public/private key pairs:
+   (you'll want to delete these files at the end)
+ ```shell
+wg genkey | tee privatekey | wg pubkey > publickey
+```
+
+2. Create server config:
+
+Create file /etc/wireguard/wg0.conf:
+ ```shell
+[Interface]
+Address = 10.12.0.1
+PrivateKey = <SERVER_PRIVATE_KEY>
+ListenPort = 51820
+
+[Peer]
+PublicKey = <CLIENT_PRIVATE_KEY>
+AllowedIPs = 10.12.0.1/24
+```
+3. Open port `51820` on your servers firewall
+
+4. Bring interface up on server
+```shell
+wg-quick up wg0
+```
+
+5. Create client config
+
+Create file /etc/wireguard/wg0.conf:
+ ```shell
+ [Interface]
+Address = 10.12.0.2
+PrivateKey = <CLIENT_PRIVATE_KEY>
+
+[Peer]
+PublicKey = <SERVER_PUBLIC_KEY>
+Endpoint = <SERVER_PUBLIC_IP>:51820
+AllowedIPs = 10.12.0.2/24
+
+PersistentKeepalive = 25
+```
+
+6. Bring interface up on client and test
+```shell
+wg-quick up wg0
+ping 10.12.0.1
+```
+
+### SSH Tunnel example
+**Assumptions:** ingress configured to 127.0.0.1:8080
+
+Create tunnel using ssh, eg:
+```shell
+ssh user@host.com -L 127.0.0.1:8080:127.0.0.1:8080
+```
+
+Then services are available via port 8080, with the domains configured in the `haproxy-internal/applications.js`
+file. The easiest way to make this available in your browser is to add entries to your
 hosts file, or use something like `dnsmasq`
 
 Eg: `/etc/hosts` file
@@ -165,8 +230,7 @@ I recommend importing these dashboards to get started:
 - HAProxy: https://grafana.com/grafana/dashboards/2263
 
 ### HAProxy
-There are two instances of haproxy in use, one for public ingress listening on port 80/443 on 
-the host, and one for private/internal ingress listening on port 8080 on the host.
+There are two instances of haproxy in use, one for public ingress, and one for private/internal ingress.
 
 The configuration is generated from a template `haproxy.cfg.template` and a list of 
 applications defined in `applications.js`
@@ -220,6 +284,7 @@ TODO: write documentation
 TODO: write documentation
   
 ## Future / TODO
-- wireguard setup to bind internal ingress to private ip/interface?
 - find a way to allow issuing of SSL certs for private/internal services?
+  - would probably have to go the DNS TXT record route, but AFAIK there is not
+    a standardised API for this that can be reasonably expected to work across providers 😢
 - selectively enable/disable core services, eg: `postgres`

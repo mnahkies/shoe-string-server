@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# WARNING
+# Currently written for the amazon linux 2 distribution
+# WARNING
+
 #
 # This is a convenience script to install docker + docker-compose,
 # and configure the daemon to start at boot time, plus grant the
@@ -13,7 +17,14 @@
 # might be less recent
 #bash <(curl -fsSL https://get.docker.com)
 sudo yum update -y
+
+sudo amazon-linux-extras install kernel-ng
+sudo amazon-linux-extras install docker
+sudo amazon-linux-extras install epel
+
+sudo yum -y install wireguard-tools
 sudo yum -y install docker bash-completion
+
 sudo groupadd docker
 sudo usermod -aG docker $USER
 

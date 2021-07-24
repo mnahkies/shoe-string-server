@@ -15,8 +15,8 @@ services:
     networks:
       - main
     ports:
-      - "${PUBLIC_IP}:80:80"
-      - "${PUBLIC_IP}:443:443"
+      - "${PUBLIC_IP}:${PUBLIC_PORT_HTTP}:80"
+      - "${PUBLIC_IP}:${PUBLIC_PORT_HTTPS}:443"
     ulimits:
       nofile: 10240
     volumes:
