@@ -13,6 +13,6 @@ docker network create --driver=bridge main || true
 docker network create --driver=bridge internal || true
 docker network create --driver=bridge monitoring || true
 
-docker-compose -f "${__dir}"/docker-compose.yaml up -d --force
+docker-compose -f "${__dir}"/docker-compose.yaml -p cluster-core up -d --force
 
 "${__dir}"/applications/watchdog-up.sh
