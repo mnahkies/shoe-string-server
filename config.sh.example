@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+export SCRIPT_BASE_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 export DATA_BASE_PATH=/home/user/data
 export INFLUXDB_ADMIN_USER=admin
 export INFLUXDB_ADMIN_PASSWORD=admin

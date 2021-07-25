@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const path = require("path");
 const fs = require("fs");
-const yaml = require('./js-yaml');
+const {loadApplications} = require('../lib/load-applications')
 
 function generateUseBackends(applications) {
   return applications.map(app => {
@@ -21,59 +21,6 @@ function generateBackends(applications) {
   }).join('\n\n')
 }
 
-function readApplications(directory) {
-  const applications = []
-  const applicationFilenames = fs.readdirSync(directory)
-
-  for (const applicationFilename of applicationFilenames) {
-    if (!applicationFilename.endsWith('.yaml') && !applicationFilename.endsWith('.yml')) {
-      continue
-    }
-
-    const application = yaml.load(fs.readFileSync(path.join(directory, applicationFilename), 'utf-8'))
-    applications.push(application)
-  }
-
-  /*
-  interface Application {
-      x-container-port: number;
-      x-external-host-names: string[];
-      services: {
-        application: {
-          hostname: string
-          container_name: string
-        }
-      }
-  }
-  */
-
-  return applications.map(app => {
-    const internalHostName = app?.services?.application?.hostname
-    const externalHostNames = app['x-external-host-names'] || []
-    const containerPort = app['x-container-port'] ?? 80
-
-    const result = {
-      internalHostName,
-      externalHostNames,
-      containerPort,
-    }
-
-    console.info("found application", result)
-    return result
-  }).filter(it => {
-    if (!it.internalHostName) {
-      console.error("skipping application as could not find internal hostname", it)
-      return false
-    }
-
-    if (!it.externalHostNames.length) {
-      console.info("skipping application as had no external hostnames", it.internalHostName)
-      return false
-    }
-
-    return true
-  })
-}
 
 function main() {
   const applicationsDirectory = process.argv[2]
@@ -81,7 +28,7 @@ function main() {
 
   console.info(`generating proxy configuration from directory ${applicationsDirectory} to ${proxyConfigDirectory}`)
 
-  const applications = readApplications(applicationsDirectory)
+  const applications = loadApplications(applicationsDirectory)
   const template = fs.readFileSync(path.join(proxyConfigDirectory, 'haproxy.cfg.template'), 'utf-8')
 
   const warning = `#---------------------------------------------------------------------
