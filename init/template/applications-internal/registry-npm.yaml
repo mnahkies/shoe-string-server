@@ -1,0 +1,22 @@
+version: "3.9"
+x-container-port: 4873
+x-external-host-names:
+  - npm.internal.example.com
+networks:
+  internal:
+    external: true
+    name: internal
+services:
+  application:
+    image: verdaccio/verdaccio:5.1
+    hostname: registry_npm
+    container_name: registry_npm
+    networks:
+      - internal
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/verdaccio/storage
+        target: /verdaccio/storage
+      - type: bind
+        source: ${DATA_BASE_PATH}/verdaccio/conf
+        target: /verdaccio/conf

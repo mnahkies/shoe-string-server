@@ -1,0 +1,19 @@
+version: "3.9"
+x-container-port: 5000
+x-external-host-names:
+  - docker.internal.example.com
+networks:
+  internal:
+    external: true
+    name: internal
+services:
+  application:
+    image: registry:2
+    hostname: registry_docker
+    container_name: registry_docker
+    networks:
+      - internal
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/docker/storage
+        target: /var/lib/registry
