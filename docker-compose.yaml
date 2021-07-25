@@ -1,9 +1,11 @@
 version: "3.9"
 networks:
   monitoring:
-    driver: bridge
+    external: true
+    name: monitoring
   internal:
-    driver: bridge
+    external: true
+    name: internal
   main:
     external: true
     name: main
@@ -20,25 +22,24 @@ services:
     ulimits:
       nofile: 10240
     volumes:
-    - type: bind
-      source: ${DATA_BASE_PATH}/haproxy-public
-      target: /usr/local/etc/haproxy
-      read_only: true
-    - type: bind
-      source: ${DATA_BASE_PATH}/haproxy-public-ssl
-      target: /usr/local/etc/ssl/certs
-      read_only: true
-    - type: bind
-      source: ${DATA_BASE_PATH}/haproxy-public-stats
-      target: /var/lib/haproxy-socket
-      read_only: false
+      - type: bind
+        source: ${DATA_BASE_PATH}/haproxy-public
+        target: /usr/local/etc/haproxy
+        read_only: true
+      - type: bind
+        source: ${DATA_BASE_PATH}/haproxy-public-ssl
+        target: /usr/local/etc/ssl/certs
+        read_only: true
+      - type: bind
+        source: ${DATA_BASE_PATH}/haproxy-public-stats
+        target: /var/lib/haproxy-socket
+        read_only: false
   haproxy_internal:
     image: haproxy:2.4-alpine
     hostname: haproxy-internal
     container_name: proxy_internal
     networks:
       - internal
-      - monitoring
     ports:
       - "${PRIVATE_IP}:${PRIVATE_PORT}:80"
     ulimits:
@@ -110,39 +111,3 @@ services:
       - type: bind
         source: /run/utmp
         target: /var/run/utmp
-  grafana:
-    image: grafana/grafana:7.5.6
-    hostname: grafana
-    container_name: monitoring_grafana
-    networks:
-      - monitoring
-    user: "1000:1000"
-    depends_on:
-      - influxdb
-    volumes:
-      - type: bind
-        source: ${DATA_BASE_PATH}/grafana
-        target: /var/lib/grafana
-  verdaccio:
-    image: verdaccio/verdaccio:5.1
-    hostname: verdaccio
-    container_name: registry_npm
-    networks:
-      - internal
-    volumes:
-      - type: bind
-        source: ${DATA_BASE_PATH}/verdaccio/storage
-        target: /verdaccio/storage
-      - type: bind
-        source: ${DATA_BASE_PATH}/verdaccio/conf
-        target: /verdaccio/conf
-  docker:
-    image: registry:2
-    hostname: docker
-    container_name: registry_docker
-    networks:
-      - internal
-    volumes:
-      - type: bind
-        source: ${DATA_BASE_PATH}/docker/storage
-        target: /var/lib/registry

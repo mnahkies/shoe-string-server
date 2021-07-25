@@ -1,4 +1,33 @@
 # Shoe-string cluster
+* [Introduction](#introduction)
+* [Guiding principals](#guiding-principals)
+* [Contributing](#contributing)
+* [Features](#features)
+* [Considerations](#considerations)
+* [Setup](#setup)
+* [Usage / Scripts reference](#usage--scripts-reference)
+  + [`./config.sh`](#configsh)
+  + [`./start.sh`](#startsh)
+  + [`./stop.sh`](#stopsh)
+  + [`./proxy/reload-haproxy-config.sh`](#proxyreload-haproxy-configsh)
+  + [`./applications/watchdog-up.sh`](#applicationswatchdog-upsh)
+  + [`./ssl/*`](#ssl)
+* [Accessing internal services](#accessing-internal-services)
+  + [VPN Wireguard example](#vpn-wireguard-example)
+  + [SSH Tunnel example](#ssh-tunnel-example)
+* [Core Services](#core-services)
+  + [Influxdb](#influxdb)
+  + [Telegraf](#telegraf)
+  + [HAProxy](#haproxy)
+    - [haproxy-public-ssl](#haproxy-public-ssl)
+* [Default internal services](#default-internal-services)
+  + [Grafana](#grafana)
+  + [Docker Registry (`registry:2`)](#docker-registry-registry2)
+  + [NPM Registry (`verdaccio`)](#npm-registry-verdaccio)
+    * [TODO:](#todo)
+* [Future / TODO](#future--todo)
+
+## Introduction
 
 This project is an attempt to create a turn-key "cluster" that is suitable for
 small servers with limited RAM.
@@ -8,7 +37,7 @@ and I use it on a AWS Lightsail host with 1GB of RAM.
 
 I wrote this after attempting to get "light weight" kubernetes environments going like K3s
 or KIND, and finding that the resource overhead was simply too high for my requirements 
-(`512mb` minimum, `1gb` recommended at time of writing)
+(`512mb` minimum, `1gb` recommended)
 
 **Current architecture**
 ![architecture](./architecture.svg)
@@ -40,7 +69,7 @@ Please feel free to fork and customize to your hearts desire though :)
 
 - Private NPM registry
 
-- Metrics collected by telegraf to influxdb, with grafana for dashboards
+- Metrics collected by `telegraf` to `influxdb`, with `grafana` for dashboards
 
 - Letsencrypt certbot for automatic SSL provisioning, and renewal
 
@@ -76,31 +105,23 @@ but you should probably read through them before attempting to use in production
 
 ### `./start.sh`
 - Generates haproxy configuration
-- Creates the `main` docker network
+- Creates the docker networks
 - Start services defined in `docker-compose.yaml`
-- Runs `watchdog.sh` to start applications configured in `applications`
+- Starts application using `applications/watchdog-up.sh`
 
 ### `./stop.sh`
 - Stop services defined in `docker-compose.yaml`
-- TODO: stop applications?
+- Stop applications using `applications/watchdog-down.sh`
+- Clean up unused networks
 
 ### `./proxy/reload-haproxy-config.sh`
 - Called automatically by `start.sh` and ssl certificate scripts
 - Re-generates `haproxy.cfg` files, and sends a signal to the containers to reload their config.
-- Can be called manually if changes to the template or applications.js files have been made
+- Can be called manually if changes to the template or applications yaml files have been made
 
-### `./applications/watchdog.sh`
-- Suitable for calling as a `CronJob` or manually after making changes to the `applications/*.sh`
+### `./applications/watchdog-up.sh`
+- Suitable for calling as a `CronJob` or manually after making changes to the application yaml
   configuration files, attempts to reconcile running containers with the configuration state.
-
-### `./appplications/deploy-new-version.sh`
-Usage:
-```shell
-./appplications/deploy-new-version.sh <APPLICATION_NAME> <TAG>
-```
-
-Where `<APPLICATION_NAME>` is the name of a configuration file, and `<TAG>` is the new
-desired `docker` tag to be executed.
 
 ### `./ssl/*`
 
@@ -182,9 +203,9 @@ hosts file, or use something like `dnsmasq`
 
 Eg: `/etc/hosts` file
 ```shell
-127.0.0.1   grafana.example.internal
-127.0.0.1   npm.example.internal
-127.0.0.1   docker.example.internal
+127.0.0.1   grafana.internal.example.com
+127.0.0.1   npm.internal.example.com
+127.0.0.1   docker.internal.example.com
 ```
 
 ## Core Services
@@ -214,26 +235,23 @@ required after bootstrapping your instance, in `/path/to/config/telegraf/telegra
 
 Refer to the manual at https://docs.influxdata.com/telegraf/v1.18/administration/configuration/
 
-### Grafana
-At first start you will need to configure grafana with a connection to the influxdb datasource, and
-create / import some dashboards.
-
-Datasource configuration:
-- URL: `http://influxdb:8086`
-- Database: `telegraf`
-- Authentication disabled by default, if you enabled it in the `docker-compose.yaml` file then
-  use the username/password you specified in `config.sh`
-
-I recommend importing these dashboards to get started:
-- System: https://grafana.com/grafana/dashboards/5955
-- Docker: https://grafana.com/grafana/dashboards/10585
-- HAProxy: https://grafana.com/grafana/dashboards/2263
-
 ### HAProxy
 There are two instances of haproxy in use, one for public ingress, and one for private/internal ingress.
 
-The configuration is generated from a template `haproxy.cfg.template` and a list of 
-applications defined in `applications.js`
+The configuration is generated the docker-compose yaml files in the `applications-public` / `applications-internal`
+directories. Specifically:
+
+- A custom top level property `x-external-host-names` is used to know which vhosts to proxy
+  to that application.
+
+- A service named `application` is expected to exist, and the `hostname` of this is used to
+  know which container to proxy to.
+
+- A custom top level property `x-container-port` is used to know which port to proxy to, or
+  default to 80.
+
+If there are no external host names declared, or no application service is found, the file 
+is skipped, and not included in the proxy.
 
 Any customizations you need to make should be made to the template rather to avoid them
 being overwritten.
@@ -262,6 +280,40 @@ As per [RFC 6761](https://datatracker.ietf.org/doc/html/rfc6761) section 6.4,
 `invalid.` is guaranteed to never exist, and once you have your own certificates
 in this folder, it is safe to delete this placeholder certificate.
 
+## Default internal services
+The configuration template defines some default internal services, including:
+- Grafana (dashboards / monitoring)
+- Private NPM Registry (`verdaccio`)
+- Private Docker Registry (`registry:2`)
+
+**You'll need to modify the external hostnames in the yaml files to suit your environment**
+
+**Disabling a service:** simply delete it's yaml file from `applications-internal`
+
+### Grafana
+At first start you will need to configure grafana with a connection to the influxdb datasource, and
+create / import some dashboards.
+
+Datasource configuration:
+- URL: `http://influxdb:8086`
+- Database: `telegraf`
+- Authentication disabled by default, if you enabled it in the `docker-compose.yaml` file then
+  use the username/password you specified in `config.sh`
+
+I recommend importing these dashboards to get started:
+- System: https://grafana.com/grafana/dashboards/5955
+- Docker: https://grafana.com/grafana/dashboards/10585
+- HAProxy: https://grafana.com/grafana/dashboards/2263
+
+### Docker Registry (`registry:2`)
+
+TODO: write documentation
+
+### NPM Registry (`verdaccio`)
+
+TODO: write documentation
+
+
 ##### TODO:
 
 - Improve file system permissions, such that only haproxy can read from this
@@ -275,16 +327,7 @@ in this folder, it is safe to delete this placeholder certificate.
 - Get rid of the certificate concatenation, haproxy no longer requires this
   since version 2.2 🥳
 
-### Docker Registry (`registry:2`)
-
-TODO: write documentation
-
-### NPM Registry (`verdaccio`)
-
-TODO: write documentation
-  
 ## Future / TODO
 - find a way to allow issuing of SSL certs for private/internal services?
   - would probably have to go the DNS TXT record route, but AFAIK there is not
     a standardised API for this that can be reasonably expected to work across providers 😢
-- selectively enable/disable core services, eg: `postgres`

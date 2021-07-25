@@ -1,0 +1,15 @@
+version: "3.9"
+x-container-port: 80
+x-external-host-names:
+  - application.example.com
+networks:
+  main:
+    external: true
+    name: main
+services:
+  application:
+    image: nginxdemos/hello:latest
+    hostname: example-application
+    container_name: example-application
+    networks:
+      - main
