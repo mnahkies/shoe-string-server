@@ -14,4 +14,4 @@ DESTINATION="${DATA_BASE_PATH}/haproxy-public-ssl"
 
 echo "pushing cert to haproxy ${LETS_ENCRYPT_DIR}/live/${NAME}"
 
-bash -c "cat ${LETS_ENCRYPT_DIR}/live/${NAME}/fullchain.pem ${LETS_ENCRYPT_DIR}/live/${NAME}/privkey.pem > ${DESTINATION}/${NAME}.pem"
+bash -c "sudo cat ${LETS_ENCRYPT_DIR}/live/${NAME}/fullchain.pem ${LETS_ENCRYPT_DIR}/live/${NAME}/privkey.pem > ${DESTINATION}/${NAME}.pem"
