@@ -166,7 +166,8 @@ AllowedIPs = 10.12.0.1/24
 
 4. Bring interface up on server
 ```shell
-wg-quick up wg0
+sudo wg-quick up wg0
+sudo systemctl enable wg-quick@wg0 # optional, enable bringing up at boot-time
 ```
 
 5. Create client config
@@ -187,7 +188,8 @@ PersistentKeepalive = 25
 
 6. Bring interface up on client and test
 ```shell
-wg-quick up wg0
+sudo wg-quick up wg0
+sudo systemctl enable wg-quick@wg0 # optional, enable bringing up at boot-time
 ping 10.12.0.1
 ```
 
@@ -336,3 +338,8 @@ TODO: write documentation
 - move influxdb and telegraf out of root docker-compose file and into default application config
   - this would make it easier to customize these applications, or disable them without
     requiring modifying the VCS controlled scripts.
+- rework data directory structure by be split by configuration / data, eg:
+  ```shell
+  /data/conf/
+  /data/data/
+  ```
