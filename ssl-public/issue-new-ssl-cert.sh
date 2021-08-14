@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-set -exo pipefail
+set -eo pipefail
 
 __dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${__dir}"/../config.sh
+
+set -x
 
 LETS_ENCRYPT_DIR="${DATA_BASE_PATH}"/letsencrypt
 
