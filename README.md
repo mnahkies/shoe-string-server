@@ -86,6 +86,9 @@ Please feel free to fork and customize to your hearts desire though :)
 - This is held together with string, a collection of bash scripts that may or may not be portable,
   it has been tested on Fedora 34 and AWS Linux 2.
   
+- Whilst every effort is made to limit RAM consumption, you may still want to add swap to avoid OOM killer. Influxdb
+  in particular can consume a fair chunk of RAM. Instructions here: https://aws.amazon.com/premiumsupport/knowledge-center/ec2-memory-swap-file/
+
 ## Setup
 1. Clone repo to somewhere on host or otherwise place the contents on the server
 2. Install `docker` / `docker-compose` (`./init/install-dependencies.sh`, or manually)
@@ -330,3 +333,6 @@ TODO: write documentation
 - find a way to allow issuing of SSL certs for private/internal services?
   - would probably have to go the DNS TXT record route, but AFAIK there is not
     a standardised API for this that can be reasonably expected to work across providers 😢
+- move influxdb and telegraf out of root docker-compose file and into default application config
+  - this would make it easier to customize these applications, or disable them without
+    requiring modifying the VCS controlled scripts.
