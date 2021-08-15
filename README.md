@@ -318,20 +318,9 @@ TODO: write documentation
 TODO: write documentation
 
 
-##### TODO:
-
-- Improve file system permissions, such that only haproxy can read from this
-  directory?
-
-- Find way to avoid above hacky workaround for first start?
-  - Possibly use the configuration generator to create an explicit
-    of certificates based on what is available in the `letsencrypt/etc` 
-    directory, and not bind to 443 until at least one exists?
-
+## Future / TODO
 - Get rid of the certificate concatenation, haproxy no longer requires this
   since version 2.2 🥳
-
-## Future / TODO
 - find a way to allow issuing of SSL certs for private/internal services?
   - would probably have to go the DNS TXT record route, but AFAIK there is not
     a standardised API for this that can be reasonably expected to work across providers 😢
