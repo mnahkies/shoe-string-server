@@ -2,7 +2,7 @@
 
 set -exo pipefail
 
-DATA_BASE_PATH={$1:-/var/cluster-config}
+DATA_BASE_PATH=${1:-/var/cluster-config}
 
 __dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -18,4 +18,4 @@ cp -rv "$__dir"/template/ "$DATA_BASE_PATH"/
 sudo chown 99:99 "$DATA_BASE_PATH"/haproxy-public-stats
 
 # Save the path to config.sh
-sed "s|<PATH_GOES_HERE>|$DATA_BASE_PATH|g" "$___dir"/config.sh.example > "$___dir"/config.sh
+sed "s|<PATH_GOES_HERE>|$DATA_BASE_PATH|g" "$__dir"/../config.sh.example > "$__dir"/../config.sh
