@@ -159,7 +159,7 @@ PrivateKey = <SERVER_PRIVATE_KEY>
 ListenPort = 51820
 
 [Peer]
-PublicKey = <CLIENT_PRIVATE_KEY>
+PublicKey = <CLIENT_PUBLIC_KEY>
 AllowedIPs = 10.12.0.1/24
 ```
 3. Open port `51820` on your servers firewall
