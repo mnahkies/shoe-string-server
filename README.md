@@ -25,6 +25,7 @@
   + [Docker Registry (`registry:2`)](#docker-registry-registry2)
   + [NPM Registry (`verdaccio`)](#npm-registry-verdaccio)
     * [TODO:](#todo)
+* [Troubleshooting](#troubleshooting)
 * [Future / TODO](#future--todo)
 
 ## Introduction
@@ -317,6 +318,56 @@ TODO: write documentation
 
 TODO: write documentation
 
+## Troubleshooting
+
+### "Module not found" / permission errors
+Some parts of the start scripts like the proxy configuration generation are executed in `docker` 
+containers to avoid needing to install software on the host.
+
+This is achieved using bind mounts, and this can result in surprising permission issues inside 
+the containers, if SELinux is enabled.
+
+To test if this might be the case, try doing:
+```
+docker run -it --rm -v $PWD:/test bash
+bash-5.1# ls /test/
+
+ls: can't open '/test/': Permission denied
+```
+
+If you see that "Permission denied" error, then you might be encountering this issue.
+
+
+You can check if SELinux is enabled using:
+
+```
+$ docker info
+```
+
+And checking for something like:
+```
+ Security Options:
+  seccomp
+   Profile: default
+  selinux
+  cgroupns
+```
+
+#### Solutions
+There are basically two ways to overcome this:
+
+1. Turn off SELinux for docker
+2. Re-label the files to be allowed
+
+**Relabelling**
+See official docs here: https://docs.docker.com/storage/bind-mounts/#configure-the-selinux-label
+
+Note: this can be dangerous / mess up the labels the host needs to be present.
+
+Re-labelling can be achieved by modifying the `-v` parameters like so `-v $PWD:/test:z` or `-v $PWD:/test:Z`
+
+**Disabling**
+Find your docker daemon config / start-up and ensure that you are not passing the `--
 
 ## Future / TODO
 - Get rid of the certificate concatenation, haproxy no longer requires this
