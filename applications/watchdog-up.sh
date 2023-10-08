@@ -16,3 +16,5 @@ PUBLIC_APPLICATIONS="${DATA_BASE_PATH}/applications-public/*.yaml"
 for APP in $PUBLIC_APPLICATIONS; do
   docker-compose -f "$APP" -p "$APP" up -d
 done
+
+"$__dir"/proxy/reload-haproxy-config.sh
