@@ -30,6 +30,12 @@ defaults
     # allows proxy to start immediately when some/all backends are not available
     default-server init-addr none
 
+listen postgres
+    bind *:5432
+    mode tcp
+    balance leastconn
+    server postgres postgres:5432 resolvers docker_resolver
+
 #---------------------------------------------------------------------
 # main frontend which proxys to the backends
 #---------------------------------------------------------------------
