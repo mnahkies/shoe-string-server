@@ -13,6 +13,13 @@ fi
 
 cp -rv "$__dir"/template/ "$DATA_BASE_PATH"/
 
+pushd $DATA_BASE_PATH
+mv .gitignore.template .gitignore
+git init
+git add .
+git commit -m "initial commit"
+popd
+
 # haproxy needs to write to this directory, so we change it's ownership
 # to the uid:gid that the proxy executes as.
 sudo chown 99:99 "$DATA_BASE_PATH"/haproxy-public-stats
