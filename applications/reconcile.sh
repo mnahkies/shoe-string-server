@@ -15,6 +15,6 @@ else
   echo "Not up to date - running reconcile"
   git pull
   popd
-  "$___dir"/watchdog-up.sh
+  "$__dir"/watchdog-up.sh
 fi
 
