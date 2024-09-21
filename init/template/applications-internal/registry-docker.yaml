@@ -8,7 +8,7 @@ networks:
     name: internal
 services:
   application:
-    image: registry:2
+    image: registry:2.8
     hostname: registry_docker
     container_name: registry_docker
     networks:

@@ -11,7 +11,7 @@ networks:
     name: main
 services:
   haproxy_public:
-    image: haproxy:2.4-alpine
+    image: haproxy:3.0-alpine
     hostname: haproxy-public
     container_name: proxy_public
     networks:
@@ -35,7 +35,7 @@ services:
         target: /var/lib/haproxy-socket
         read_only: false
   haproxy_internal:
-    image: haproxy:2.4-alpine
+    image: haproxy:3.0-alpine
     hostname: haproxy-internal
     container_name: proxy_internal
     networks:
@@ -70,7 +70,7 @@ services:
         source: ${DATA_BASE_PATH}/influxdb
         target: /var/lib/influxdb
   telegraf:
-    image: telegraf:1.18-alpine
+    image: telegraf:1.32-alpine
     hostname: telegraf
     container_name: monitoring_telegraf
     networks:

@@ -8,7 +8,7 @@ networks:
     name: internal
 services:
   application:
-    image: verdaccio/verdaccio:5.1
+    image: verdaccio/verdaccio:5.32
     hostname: registry_npm
     container_name: registry_npm
     networks:
