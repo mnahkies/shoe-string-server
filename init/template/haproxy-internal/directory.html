@@ -1,0 +1,83 @@
+HTTP/1.0 200 OK
+Cache-Control: no-cache
+Connection: close
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>server.example.com - directory</title>
+  <script type="text/javascript">
+    const internalBaseUrl = 'server.internal.example.com'
+
+    const internalServices = [
+      "grafana",
+      "npm",
+      "docker-ui",
+      "prometheus"
+    ];
+
+    const publicServices = [
+      "example.com",
+    ]
+  </script>
+</head>
+<style type="text/css">
+  body {
+    font-family: sans-serif;
+  }
+
+  #container {
+    max-width: 800px;
+    margin: 20px auto;
+  }
+
+  h2 {
+    font-style: italic
+  }
+
+  li {
+    list-style: none;
+  }
+</style>
+<body>
+
+<div id="container">
+</div>
+
+<script type="text/javascript">
+
+  function directory(title, services, baseUrl){
+    const h1 = document.createElement('h1')
+    h1.textContent = title
+
+    const h2 = document.createElement('h2')
+    h2.textContent = baseUrl
+
+    const ul = document.createElement('ul')
+
+    for (const service of services) {
+      const li = document.createElement('li')
+      const h3 = document.createElement('h3')
+      const a = document.createElement('a')
+      a.href = baseUrl ? `http://${service}.${baseUrl}` : `https://${service}`
+      a.text = `${service}.${baseUrl}`
+      h3.appendChild(a)
+      li.appendChild(h3)
+      ul.appendChild(li)
+    }
+
+    const container = document.querySelector('#container')
+    container.appendChild(h1)
+    container.appendChild(h2)
+    container.appendChild(ul)
+  }
+
+  directory("Internal Services", internalServices, internalBaseUrl)
+  directory("Public Services", publicServices, "")
+
+</script>
+
+</body>
+</html>
