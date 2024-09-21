@@ -3,7 +3,7 @@ global
     maxconn     4000
 
     # turn on stats unix socket, mostly-ro
-    stats socket /var/lib/haproxy-socket/stats.sock level operator
+    stats socket /var/lib/haproxy-socket/stats.sock level operator user haproxy group haproxy
     tune.ssl.default-dh-param 2048
 
 resolvers docker_resolver
@@ -37,20 +37,30 @@ defaults
 #---------------------------------------------------------------------
 # main frontend which proxys to the backends
 #---------------------------------------------------------------------
-frontend  main
+frontend  external
      bind *:80
      # note: this must be commented for first start, when no certificates exist.
      bind *:443 ssl crt /usr/local/etc/ssl/certs/ alpn h2,http/1.1
 
     acl acme path_beg /.well-known/acme-challenge
 
-    #http-request redirect scheme https if !acme !{ ssl_fc }
-
+    http-request redirect scheme https if !acme !{ ssl_fc }
+    http-request set-header X-Forwarded-Proto https if { ssl_fc }
     use_backend letsencrypt if acme
 
 {{USE_BACKENDS}}
 
     default_backend             no-match
+
+#---------------------------------------------------------------------
+# stats frontend which powers prometheus metrics
+#---------------------------------------------------------------------
+frontend stats
+   bind *:8404
+   http-request use-service prometheus-exporter if { path /metrics }
+   stats enable
+   stats uri /stats
+   stats refresh 10s
 
 {{BACKENDS}}
 

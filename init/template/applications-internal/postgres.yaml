@@ -1,0 +1,22 @@
+version: "3.9"
+networks:
+  internal:
+    external: true
+    name: internal
+  postgres:
+    external: true
+    name: postgres
+services:
+  application:
+    image: postgres:16
+    hostname: postgres
+    container_name: postgres
+    networks:
+      - internal
+      - postgres
+    environment:
+      POSTGRES_PASSWORD: '<password>'
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/postgres/16/data
+        target: /var/lib/postgresql/data

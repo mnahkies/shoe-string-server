@@ -13,7 +13,6 @@ docker network prune -f
 
 docker network create --driver=bridge main || true
 docker network create --driver=bridge internal || true
-docker network create --driver=bridge monitoring || true
 
 for name in ${ADDITIONAL_NETWORKS:-()}; do
   docker network create --driver=bridge "$name" || true

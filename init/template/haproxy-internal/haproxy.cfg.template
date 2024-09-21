@@ -39,14 +39,27 @@ listen postgres
 #---------------------------------------------------------------------
 # main frontend which proxys to the backends
 #---------------------------------------------------------------------
-frontend  main
+frontend  internal
      bind *:80
 
 {{USE_BACKENDS}}
 
     default_backend             no-match
 
+#---------------------------------------------------------------------
+# stats frontend which powers prometheus metrics
+#---------------------------------------------------------------------
+frontend stats
+   bind *:8404
+   http-request use-service prometheus-exporter if { path /metrics }
+   stats enable
+   stats uri /stats
+   stats refresh 10s
+
 {{BACKENDS}}
 
 backend no-match
-    http-request deny deny_status 400
+    mode http
+    http-request set-log-level silent
+    errorfile 503 /usr/local/etc/haproxy/directory.html
+    #http-request deny deny_status 400

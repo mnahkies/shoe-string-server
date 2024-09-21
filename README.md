@@ -69,7 +69,7 @@ Please feel free to fork and customize to your hearts desire though :)
 
 - Private NPM registry
 
-- Metrics collected by `telegraf` to `influxdb`, with `grafana` for dashboards
+- Metrics collected by `prometheus`, with `grafana` for dashboards
 
 - Letsencrypt certbot for automatic SSL provisioning, and renewal
 
@@ -216,33 +216,10 @@ Eg: `/etc/hosts` file
 There are a number of "core" services managed by `docker-compose`. This is distinct from application services
 that you want to deploy and make available.
 
-### Influxdb
-This is a time series database used by `telegraf` / `grafana` to collect and display metrics
-about the host system, and public proxy.
-
-By default, authentication is disabled. For production environments it probably makes sense to enable
-authentication, and adjust the `telegraf` / `grafana` configuration as appropriate.
-
-You may wish to customise the rentention policy and add continous queries to downsample your data,
-refer to https://docs.influxdata.com/influxdb/v1.7/guides/downsampling_and_retention/ for help with this.
-
-Start a influx shell using:
-```shell
-docker exec -it monitoring_influxdb influx
-```
-
-### Telegraf
-This is the agent that collects metrics from the system and stores them in `influxdb`.
-
-The default configuration should be a good baseline, and you can of course configure this as
-required after bootstrapping your instance, in `/path/to/config/telegraf/telegraf.conf`
-
-Refer to the manual at https://docs.influxdata.com/telegraf/v1.18/administration/configuration/
-
 ### HAProxy
 There are two instances of haproxy in use, one for public ingress, and one for private/internal ingress.
 
-The configuration is generated the docker-compose yaml files in the `applications-public` / `applications-internal`
+The configuration is generated from the docker-compose yaml files in the `applications-public` / `applications-internal`
 directories. Specifically:
 
 - A custom top level property `x-external-host-names` is used to know which vhosts to proxy
@@ -286,28 +263,38 @@ in this folder, it is safe to delete this placeholder certificate.
 
 ## Default internal services
 The configuration template defines some default internal services, including:
+- Prometheus / Node Exporter / Postgres Exporter / cadvisor (metrics collection)
 - Grafana (dashboards / monitoring)
 - Private NPM Registry (`verdaccio`)
 - Private Docker Registry (`registry:2`)
+- Postgres
 
 **You'll need to modify the external hostnames in the yaml files to suit your environment**
 
 **Disabling a service:** simply delete it's yaml file from `applications-internal`
 
 ### Grafana
-At first start you will need to configure grafana with a connection to the influxdb datasource, and
+At first start you will need to configure grafana with a connection to the prometheus datasource, and
 create / import some dashboards.
 
 Datasource configuration:
-- URL: `http://influxdb:8086`
-- Database: `telegraf`
-- Authentication disabled by default, if you enabled it in the `docker-compose.yaml` file then
-  use the username/password you specified in `config.sh`
+- Type `prometheus`
+- URL: `http://monitoring_prometheus:9090`
+- Authentication disabled by default
 
 I recommend importing these dashboards to get started:
-- System: https://grafana.com/grafana/dashboards/5955
-- Docker: https://grafana.com/grafana/dashboards/10585
-- HAProxy: https://grafana.com/grafana/dashboards/2263
+- System: https://grafana.com/grafana/dashboards/1860-node-exporter-full/
+- Docker: https://grafana.com/grafana/dashboards/16527-docker-monitoring/
+- Postgres: https://grafana.com/grafana/dashboards/14114-postgres-overview/
+- HAProxy: https://grafana.com/grafana/dashboards/12693-haproxy-2-full/
+
+#### Postgres Exporter configuration
+You'll need to create a user for the exporter to use, and then configure it's credentials in `prometheus.yaml`
+```sql
+create user postgres_exporter with login password '<password>';
+grant pg_monitor to postgres_exporter;
+grant connect on database postgres to postgres_exporter;
+```
 
 ### Docker Registry (`registry:2`)
 
@@ -324,9 +311,6 @@ TODO: write documentation
 - find a way to allow issuing of SSL certs for private/internal services?
   - would probably have to go the DNS TXT record route, but AFAIK there is not
     a standardised API for this that can be reasonably expected to work across providers 😢
-- move influxdb and telegraf out of root docker-compose file and into default application config
-  - this would make it easier to customize these applications, or disable them without
-    requiring modifying the VCS controlled scripts.
 - rework data directory structure by be split by configuration / data, eg:
   ```shell
   /data/conf/

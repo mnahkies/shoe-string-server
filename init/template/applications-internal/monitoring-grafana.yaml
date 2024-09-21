@@ -6,16 +6,12 @@ networks:
   internal:
     external: true
     name: internal
-  monitoring:
-    external: true
-    name: monitoring
 services:
   application:
     image: grafana/grafana:11.2.0
     hostname: monitoring_grafana
     container_name: monitoring_grafana
     networks:
-      - monitoring
       - internal
     user: "1000:1000"
     volumes:

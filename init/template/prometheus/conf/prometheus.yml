@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 15s # Default scrape interval, change as needed
+  evaluation_interval: 15s # Default evaluation interval, change as needed
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: [ 'localhost:9090' ]
+  - job_name: node
+    static_configs:
+      - targets: [ 'monitoring_node_exporter:9100' ]
+  - job_name: postgres
+    static_configs:
+      - targets: [ "monitoring_postgres_exporter:9187" ]
+  - job_name: haproxy
+    static_configs:
+      - targets: [
+        'proxy_internal:8404',
+        'proxy_public:8404'
+      ]
+  - job_name: cadvisor
+    static_configs:
+      - targets: [ 'monitoring_cadvisor:8080' ]

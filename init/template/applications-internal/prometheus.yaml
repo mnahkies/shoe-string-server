@@ -1,0 +1,77 @@
+version: "3.9"
+x-container-port: 9090
+x-external-host-names:
+  - <internal-hostname>
+networks:
+  internal:
+    external: true
+    name: internal
+  main:
+    external: true
+    name: main
+  postgres:
+    external: true
+    name: postgres
+services:
+  application:
+    image: prom/prometheus:v3.0.0-beta.0
+    container_name: monitoring_prometheus
+    hostname: monitoring_prometheus
+    networks:
+      - internal
+      - main
+    user: 1000:1000
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/var/data
+      - --storage.tsdb.retention.time=30d
+      - --storage.tsdb.min-block-duration=2h
+      - --storage.tsdb.max-block-duration=2h
+      - --query.lookback-delta=1m
+      - --storage.tsdb.no-lockfile
+      - --storage.tsdb.wal-compression
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/prometheus/conf/prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+        read_only: true
+      - type: bind
+        source: ${DATA_BASE_PATH}/prometheus/data
+        target: /var/data
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: monitoring_node_exporter
+    hostname: monitoring_node_exporter
+    command:
+      - '--path.rootfs=/host'
+    networks:
+      - internal
+    pid: host
+    volumes:
+      - '/:/host:ro,rslave'
+  postgres_exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    container_name: monitoring_postgres_exporter
+    hostname: monitoring_postgres_exporter
+    networks:
+      - internal
+      - postgres
+    environment:
+      DATA_SOURCE_URI: "postgres:5432/postgres?sslmode=disable"
+      DATA_SOURCE_USER: <postgres-user>
+      DATA_SOURCE_PASS: <postgres-password>
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: monitoring_cadvisor
+    hostname: monitoring_cadvisor
+    privileged: true
+    networks:
+      - internal
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /dev/kmsg:/dev/kmsg
