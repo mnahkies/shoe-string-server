@@ -78,6 +78,12 @@ services:
     depends_on:
       - influxdb
       - haproxy_public
+    # hack: they changed their image to use a non-root user, but it makes managing permissions on the haproxy socket / docker socket a pain
+    #       https://www.influxdata.com/blog/docker-run-telegraf-as-non-root/
+    #       theoretically it'll respect group_add but it seems broken - I don't observe the groups being added to the telegraf user when exec
+    #       into the container. give up for now and force it to run as root.
+    user: 0:0
+    entrypoint: telegraf
     environment:
       HOST_PROC: /rootfs/proc
       HOST_SYS: /rootfs/sys
@@ -106,6 +112,14 @@ services:
       - type: bind
         source: /etc
         target: /rootfs/etc
+        read_only: true
+      - type: bind
+        source: /dev/xvda
+        target: /dev/xvda
+        read_only: true
+      - type: bind
+        source: /dev/xvda1
+        target: /dev/xvda1
         read_only: true
       - type: bind
         source: /run/utmp
