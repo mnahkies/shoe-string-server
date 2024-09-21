@@ -18,6 +18,8 @@ for name in ${ADDITIONAL_NETWORKS:-()}; do
   docker network create --driver=bridge "$name" || true
 done
 
-docker-compose -f "${__dir}"/docker-compose.yaml -p cluster-core up -d --force
+sleep 2
+
+docker-compose --file "${__dir}"/docker-compose.yaml -p cluster-core up -d  --force-recreate --remove-orphans
 
 "${__dir}"/applications/watchdog-up.sh
