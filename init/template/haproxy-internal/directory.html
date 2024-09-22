@@ -61,7 +61,7 @@ Content-Type: text/html
       const li = document.createElement('li')
       const h3 = document.createElement('h3')
       const a = document.createElement('a')
-      a.href = baseUrl ? `http://${service}.${baseUrl}` : `https://${service}`
+      a.href = baseUrl ? `https://${service}.${baseUrl}` : `https://${service}`
       a.text = `${service}.${baseUrl}`
       h3.appendChild(a)
       li.appendChild(h3)
