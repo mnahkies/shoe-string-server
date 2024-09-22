@@ -59,7 +59,7 @@ chown -R 999 ~/data/postgres/$NEW_VERSION
 chmod -R 700 ~/data/postgres/$NEW_VERSION
 
 # Stop the database
-docker-compose -f ~/data/applications-internal/postgres.yaml -p ~/data/applications-internal/postgres.yaml down --remove-orphans
+docker compose -f ~/data/applications-internal/postgres.yaml -p ~/data/applications-internal/postgres.yaml down --remove-orphans
 
 # Run the upgrade
 docker run -it --name=postgres-upgrade -v $HOME/data/postgres:/var/lib/postgresql tianon/postgres-upgrade:$OLD_VERSION-to-$NEW_VERSION --link

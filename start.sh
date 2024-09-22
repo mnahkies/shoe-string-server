@@ -20,6 +20,6 @@ done
 
 sleep 2
 
-docker-compose --file "${__dir}"/docker-compose.yaml -p cluster-core up -d  --force-recreate --remove-orphans
+docker compose --file "${__dir}"/docker-compose.yaml -p cluster-core up -d  --force-recreate --remove-orphans
 
 "${__dir}"/applications/watchdog-up.sh
