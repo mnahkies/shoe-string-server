@@ -37,7 +37,8 @@ services:
     networks:
       - internal
     ports:
-      - "${PRIVATE_IP}:${PRIVATE_PORT}:80"
+      - "${PRIVATE_IP}:${PRIVATE_PORT_HTTP}:80"
+      - "${PRIVATE_IP}:${PRIVATE_PORT_HTTPS}:443"
       - "${PRIVATE_IP}:5432:5432"
     ulimits:
       nofile: 10240
@@ -45,4 +46,8 @@ services:
       - type: bind
         source: ${DATA_BASE_PATH}/haproxy-internal
         target: /usr/local/etc/haproxy
+        read_only: true
+      - type: bind
+        source: ${DATA_BASE_PATH}/haproxy-internal-ssl
+        target: /usr/local/etc/ssl/certs
         read_only: true

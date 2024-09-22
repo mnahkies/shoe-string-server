@@ -24,5 +24,9 @@ popd
 # to the uid:gid that the proxy executes as.
 sudo chown 99:99 "$DATA_BASE_PATH"/haproxy-public-stats
 
+openssl dhparam -out "$DATA_BASE_PATH"/haproxy-public/dhparam 2048
+openssl dhparam -out "$DATA_BASE_PATH"/haproxy-internal/dhparam 2048
+
+
 # Save the path to config.sh
 sed "s|<PATH_GOES_HERE>|$DATA_BASE_PATH|g" "$__dir"/../config.sh.example > "$__dir"/../config.sh
