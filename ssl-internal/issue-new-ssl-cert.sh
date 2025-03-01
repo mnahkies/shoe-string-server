@@ -12,16 +12,16 @@ DOMAINS=$1
 
 echo "issuing cert for ${DOMAINS} using ${LETS_ENCRYPT_EMAIL_ADDRESS}"
 
-docker run -it --rm --name lego \
+docker run -it --rm \
   -v "${LEGO_DIR}:/var/lego" \
   --name lego \
   -e ZONOMI_API_KEY="${ZONOMI_API_KEY}" \
   -e ZONOMI_PROPAGATION_TIMEOUT=600 \
   -e ZONOMI_TTL=60 \
-  goacme/lego \
+  goacme/lego:v4.22 \
   --path /var/lego \
   --email "${LETS_ENCRYPT_EMAIL_ADDRESS}" \
-  --dns.resolvers 8.8.8.8 --dns.resolvers 4.4.4.4 \
+  --dns.resolvers 8.8.8.8 \
   --dns zonomi --domains "${DOMAINS}" \
   --accept-tos \
   run
