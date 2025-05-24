@@ -16,12 +16,12 @@ docker run -it --rm --name lego \
   -v "${LEGO_DIR}:/var/lego" \
   --name lego \
   -e ZONOMI_API_KEY="${ZONOMI_API_KEY}" \
-  -e ZONOMI_PROPAGATION_TIMEOUT=600 \
+  -e ZONOMI_PROPAGATION_TIMEOUT=1200 \
   -e ZONOMI_TTL=60 \
   goacme/lego \
   --path /var/lego \
   --email "${LETS_ENCRYPT_EMAIL_ADDRESS}" \
-  --dns.resolvers 8.8.8.8 --dns.resolvers 4.4.4.4 \
+  --dns.resolvers 8.8.8.8 --dns.resolvers 8.8.4.4 \
   --dns zonomi --domains "${DOMAINS}" \
   --accept-tos \
   renew
