@@ -21,7 +21,7 @@ docker run -it --rm \
   goacme/lego:v4.22 \
   --path /var/lego \
   --email "${LETS_ENCRYPT_EMAIL_ADDRESS}" \
-  --dns.resolvers 8.8.8.8 \
+  --dns.resolvers 1.1.1.1 --dns.resolvers 1.0.0.1 \
   --dns zonomi --domains "${DOMAINS}" \
   --accept-tos \
   run
