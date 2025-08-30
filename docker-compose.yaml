@@ -40,6 +40,8 @@ services:
       - "${PRIVATE_IP}:${PRIVATE_PORT_HTTP}:80"
       - "${PRIVATE_IP}:${PRIVATE_PORT_HTTPS}:443"
       - "${PRIVATE_IP}:5432:5432"
+      - "${PRIVATE_IP}:53:53/udp"
+      - "${PRIVATE_IP}:53:53/tcp"
     ulimits:
       nofile: 10240
     volumes:
