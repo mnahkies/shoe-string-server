@@ -11,7 +11,6 @@ chmod -R 700 ~/data/postgres/16
 
 Create `postgres.yaml` application in `applications-internal`:
 ```yaml
-version: "3.9"
 networks:
   internal:
     external: true

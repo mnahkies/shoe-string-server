@@ -5,6 +5,8 @@ export LETS_ENCRYPT_EMAIL_ADDRESS=support@example.com
 # if using ssl certs for proxy_internal *and* using zonomi as a dns provider
 export ZONOMI_API_KEY=""
 
+export POSTGRES_PASSWORD="<password>"
+
 # On AWS you can find these addresses by:
 # curl http://169.254.169.254/latest/meta-data/public-ipv4
 # curl http://169.254.169.254/latest/meta-data/local-ipv4

@@ -1,4 +1,3 @@
-version: "3.9"
 x-container-port: 9090
 x-external-host-names:
   - <internal-hostname>

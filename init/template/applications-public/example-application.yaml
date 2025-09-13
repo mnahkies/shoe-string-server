@@ -1,4 +1,3 @@
-version: "3.9"
 x-container-port: 80
 x-external-host-names:
   - application.example.com
