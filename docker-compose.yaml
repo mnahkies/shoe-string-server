@@ -7,7 +7,7 @@ networks:
     name: main
 services:
   haproxy_public:
-    image: haproxy:3.1.5-alpine
+    image: haproxy:3.2.4-alpine
     hostname: haproxy-public
     container_name: proxy_public
     networks:
@@ -33,7 +33,7 @@ services:
     profiles:
       - public
   haproxy_internal:
-    image: haproxy:3.1.5-alpine
+    image: haproxy:3.2.4-alpine
     hostname: haproxy-internal
     container_name: proxy_internal
     networks:
