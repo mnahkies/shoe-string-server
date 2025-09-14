@@ -1,4 +1,3 @@
-version: "3.9"
 x-container-port: 3000
 x-external-host-names:
   - grafana.internal.example.com

@@ -7,7 +7,7 @@ networks:
     name: main
 services:
   haproxy_public:
-    image: haproxy:3.1.5-alpine
+    image: haproxy:3.2.4-alpine
     hostname: haproxy-public
     container_name: proxy_public
     networks:
@@ -30,8 +30,10 @@ services:
         source: ${DATA_BASE_PATH}/haproxy-public-stats
         target: /var/lib/haproxy-socket
         read_only: false
+    profiles:
+      - public
   haproxy_internal:
-    image: haproxy:3.1.5-alpine
+    image: haproxy:3.2.4-alpine
     hostname: haproxy-internal
     container_name: proxy_internal
     networks:
@@ -51,3 +53,5 @@ services:
         source: ${DATA_BASE_PATH}/haproxy-internal-ssl
         target: /usr/local/etc/ssl/certs
         read_only: true
+    profiles:
+      - internal

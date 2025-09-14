@@ -26,10 +26,20 @@ function main() {
   const applicationsDirectory = process.argv[2]
   const proxyConfigDirectory = process.argv[3]
 
+
+
   console.info(`generating proxy configuration from directory ${applicationsDirectory} to ${proxyConfigDirectory}`)
 
   const applications = loadApplications(applicationsDirectory)
-  const template = fs.readFileSync(path.join(proxyConfigDirectory, 'haproxy.cfg.template'), 'utf-8')
+
+  const templatePath = path.join(proxyConfigDirectory, "haproxy.cfg.template");
+
+  if (!fs.existsSync(templatePath)) {
+    console.warn(`WARNING: template path does not exist: ${templatePath} - skipping.`)
+    return
+  }
+
+  const template = fs.readFileSync(templatePath, 'utf-8')
 
   const warning = `#---------------------------------------------------------------------
 # WARNING: automatically generated, please edit the template file haproxy.cfg.template

@@ -1,4 +1,3 @@
-version: "3.9"
 x-container-port: 4873
 x-external-host-names:
   - npm.internal.example.com
