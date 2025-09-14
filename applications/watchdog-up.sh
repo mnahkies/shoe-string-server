@@ -5,6 +5,8 @@ set -eo pipefail
 __dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${__dir}"/../config.sh
 
+shopt -s nullglob
+
 INTERNAL_APPLICATIONS="${DATA_BASE_PATH}/applications-internal/*.yaml"
 
 for APP in $INTERNAL_APPLICATIONS; do
