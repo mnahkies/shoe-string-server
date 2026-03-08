@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const {loadApplications} = require('../lib/load-applications')
+import {loadApplications} from '../lib/load-applications.ts'
 const DIR = process.argv[2]
 
 const applications = loadApplications(DIR)
