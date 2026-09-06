@@ -1,0 +1,66 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "files": {
+    // 10MB
+    "maxSize": 10485760,
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/package.json",
+      "!!**/dist",
+      "!!**/*.svg",
+      "!!**/*.html",
+      "!!**/src/types/docker-compose.ts"
+    ]
+  },
+  "formatter": {
+    "indentWidth": 2,
+    "indentStyle": "space"
+  },
+  "javascript": {
+    "formatter": {
+      "bracketSpacing": false,
+      "semicolons": "asNeeded"
+    }
+  },
+  "json": {
+    "parser": {
+      "allowComments": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "domains": {
+      "project": "recommended",
+      "test": "recommended"
+    },
+    "rules": {
+      "complexity": {
+        "noForEach": "error"
+      },
+      "correctness": {
+        "noUnusedImports": "error"
+      },
+      "suspicious": {
+        "noImportCycles": "error"
+      },
+      "style": {
+        "noParameterAssign": "error",
+        "useBlockStatements": "error"
+      }
+    },
+    "includes": ["**", "!**/package.json"]
+  }
+}

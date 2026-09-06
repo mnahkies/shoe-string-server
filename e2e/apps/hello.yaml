@@ -1,0 +1,38 @@
+name: hello
+networks:
+  main:
+    external: true
+    name: main
+services:
+  hello:
+    build:
+      context: ../test-app
+      dockerfile: Dockerfile
+    hostname: hello
+    container_name: hello
+    user: 2000:2000
+    security_opt:
+      - label:level:s0:c100,c203,c204
+    networks:
+      - main
+    x-ext-hostnames:
+      - name: hello.test
+        container-port: 8080
+        proxy-name: public
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/conf/hello
+        target: /conf
+        read_only: true
+        bind:
+          selinux: Z
+      - type: bind
+        source: ${DATA_BASE_PATH}/data/hello
+        target: /data
+        bind:
+          selinux: Z
+    secrets:
+      - TEST_SECRET
+secrets:
+  TEST_SECRET:
+    environment: TEST_SECRET
