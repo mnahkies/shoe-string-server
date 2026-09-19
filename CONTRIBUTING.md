@@ -5,6 +5,7 @@ Read [README.md](README.md) for the CLI's configuration and operational model. T
 ## Contents
 
 * [Development setup](#development-setup)
+  * [Shell completions during local development](#shell-completions-during-local-development)
 * [Checks and tests](#checks-and-tests)
   * [Unit-test conventions](#unit-test-conventions)
   * [E2E prerequisites and side effects](#e2e-prerequisites-and-side-effects)
@@ -30,6 +31,13 @@ mise exec -- node dist/cli.mjs --help
 ```
 
 The build runs TypeScript typechecking (`noEmit`) and then bundles `src/cli.ts` to `dist/cli.mjs` with `tsdown`.
+
+### Shell completions during local development
+
+Completion scripts invoke `shoe-string` by name. When working from a local checkout, you can define completions
+for the current shell session by running `source ./scripts/test-shell-completions.sh <bash|zsh>`
+
+See also upstream [@bomb.sh/tab development guidelines](https://github.com/bombshell-dev/tab/tree/main#development-workflow)
 
 ## Checks and tests
 

@@ -1,10 +1,28 @@
 import {describe, expect, it, vi} from "vitest"
-import {createProgram} from "./cli.ts"
+import {createProgram, main} from "./cli.ts"
 import * as downModule from "./cmd/down.ts"
 import * as reconcileModule from "./cmd/reconcile.ts"
 import * as reloadHaproxyModule from "./cmd/reload-haproxy.ts"
 import * as loadSecretsModule from "./cmd/secrets.ts"
 import * as upModule from "./cmd/up.ts"
+
+async function getCompletionOutput(args: string[]): Promise<string> {
+  const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined)
+
+  try {
+    await createProgram().parseAsync([
+      "node",
+      "cli.ts",
+      "complete",
+      "--",
+      ...args,
+    ])
+
+    return logSpy.mock.calls.map((args) => args.join(" ")).join("\n")
+  } finally {
+    logSpy.mockRestore()
+  }
+}
 
 describe("CLI Program", () => {
   it("registers all expected cmd and aliases", () => {
@@ -23,6 +41,55 @@ describe("CLI Program", () => {
     const optionNames = program.options.map((opt) => opt.long)
     expect(optionNames).toContain("--data-dir")
     expect(optionNames).toContain("--secrets-file")
+  })
+
+  it("registers shell completion commands", () => {
+    const program = createProgram()
+
+    expect(program.commands.map((cmd) => cmd.name())).toContain("complete")
+  })
+
+  it("completes top-level commands", async () => {
+    const output = await getCompletionOutput([])
+
+    expect(output).toContain(
+      "up\tProvision networks, start applications, and reload proxies",
+    )
+    expect(output).toContain(
+      "down\tStop applications and prune unused networks (targeted by default)",
+    )
+    expect(output).toContain("complete\tGenerate shell completion scripts")
+    expect(await getCompletionOutput(["up"])).toBe(
+      "up\tProvision networks, start applications, and reload proxies\n:4",
+    )
+  })
+
+  it("completes options for the up command", async () => {
+    expect(await getCompletionOutput(["up", "-"])).toBe(
+      "-h\tdisplay help for command\n:4",
+    )
+    expect(await getCompletionOutput(["up", "--"])).toContain(
+      "--force-recreate\tForce recreation of containers, even if nothing changed",
+    )
+    expect(await getCompletionOutput(["up", "--"])).toContain(
+      "--build\tBuild images before starting containers.",
+    )
+  })
+
+  it("does not execute commands while completing", async () => {
+    const secretsSpy = vi
+      .spyOn(loadSecretsModule, "loadSecretsCommand")
+      .mockResolvedValue(undefined)
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined)
+
+    try {
+      await main(["node", "cli.ts", "complete", "--", "secrets", "--"])
+
+      expect(secretsSpy).not.toHaveBeenCalled()
+    } finally {
+      logSpy.mockRestore()
+      secretsSpy.mockRestore()
+    }
   })
 
   it("parses and propagates options for 'up' command", async () => {

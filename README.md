@@ -17,6 +17,7 @@
   * [Simplified SSL Certificate management](#simplified-ssl-certificate-management)
   * [More flexible ingress declaration, and proxy management](#more-flexible-ingress-declaration-and-proxy-management)
   * [Flexible network layout](#flexible-network-layout)
+  * [Shell completions](#shell-completions)
 * [Additional Docs](#additional-docs)
 * [Development](#development)
 * [LLM Policy](#llm-policy)
@@ -40,7 +41,6 @@ The following commands are already implemented:
 * HAProxy conf template could be further cleaned up / abstracted
 * `docker` / `docker-compose` compatibility testing
 * backup orchestration / tooling
-* shell completions
 * `updatecli` integration
 * More complete documentation / runbooks. Sorry this will come soon.
 
@@ -93,6 +93,19 @@ This means that we only restart containers that have changed, instead of all of 
 Formalizes secrets management using [sops](https://github.com/mozilla/sops) and [age](https://github.com/FiloSottile/age),
 to inject [compose secrets](https://docs.docker.com/compose/how-tos/use-secrets/)
 
+Includes a command to help decrypt specific secrets. Example usage: `run-updatecli.sh`
+
+```shell
+#!/usr/bin/env bash
+
+eval "$(mise exec -- shoe-string secrets --filter 'DOCKER_HUB_USERNAME|DOCKER_HUB_TOKEN')"
+
+docker run --rm -v "$PWD":/home/updatecli \
+  -e DOCKERHUB_USERNAME="${DOCKER_HUB_USERNAME}" \
+  -e DOCKERHUB_TOKEN="${DOCKER_HUB_TOKEN}" \
+  ghcr.io/updatecli/updatecli:latest@sha256:63d08532b91df649fbc585b8aa9434309531e25ac92069dd2a3be76db9cf399d pipeline apply
+```
+
 ### Stricter container isolation
 
 Leverages [userns](https://docs.podman.io/en/stable/markdown/podman-run.1.html#userns-mode) and `:Z` SELinux relabelling,
@@ -129,6 +142,23 @@ See [docker-compose-extensions.ts](./src/types/docker-compose-extensions.ts)
 
 Similar to the proxy definitions moving into your `conf` repository, so do all network definitions. This means there are no longer
 hardcoded assumptions about the network layout, and you can define your own networks as required.
+
+### Shell completions
+
+Generate completions for Zsh, Bash, Fish, or PowerShell with `shoe-string complete <shell>`.
+
+For a one-time Zsh setup in the current shell:
+
+```sh
+source <(shoe-string complete zsh)
+```
+
+To load Zsh completions automatically in future shells:
+
+```sh
+shoe-string complete zsh > ~/.shoe-string-completion.zsh
+echo 'source ~/.shoe-string-completion.zsh' >> ~/.zshrc
+```
 
 ## Additional Docs
 
