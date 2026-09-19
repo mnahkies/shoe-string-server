@@ -1,3 +1,10 @@
+> [!WARNING]
+> **Legacy Version / Unsupported**
+>
+> This branch (`legacy`) preserves the original implementation of `shoe-string-server` and is no longer maintained.
+>
+> Active development and the current rewrite live on the [`main`](https://github.com/mnahkies/shoe-string-server/tree/main) branch.
+
 # Shoe-string cluster
 * [Introduction](#introduction)
 * [Guiding principals](#guiding-principals)
