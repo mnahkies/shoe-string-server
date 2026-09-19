@@ -394,7 +394,7 @@ describe("generateHaproxyConfig", () => {
 
     await fsAdaptor.writeFile(
       path.join(proxyDir, "haproxy.cfg.template"),
-      "{{TCP_LISTEN}}\n\nfrontend main\n{{AUTH_FRONTENDS}}\n{{USE_BACKENDS}}\n\n{{BACKENDS}}\n",
+      "{{TCP_LISTEN}}\n\nfrontend main\n{{FORWARD_AUTH_ACL}}\n{{USE_BACKENDS}}\n\n{{BACKENDS}}\n",
     )
 
     await generateHaproxyConfig(appsDir, {
@@ -436,7 +436,7 @@ describe("generateHaproxyConfig", () => {
   it("throws error when placeholder is duplicated in template", async () => {
     await fsAdaptor.writeFile(
       path.join(proxyDir, "haproxy.cfg.template"),
-      "{{TCP_LISTEN}}\n{{TCP_LISTEN}}\n{{USE_BACKENDS}}\n{{AUTH_FRONTENDS}}\n{{BACKENDS}}\n",
+      "{{TCP_LISTEN}}\n{{TCP_LISTEN}}\n{{USE_BACKENDS}}\n{{FORWARD_AUTH_ACL}}\n{{BACKENDS}}\n",
     )
 
     await expect(

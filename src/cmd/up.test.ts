@@ -99,7 +99,7 @@ describe("up command", () => {
     "global",
     "{{TCP_LISTEN}}",
     "{{USE_BACKENDS}}",
-    "{{AUTH_FRONTENDS}}",
+    "{{FORWARD_AUTH_ACL}}",
     "{{BACKENDS}}",
   ].join("\n")
 

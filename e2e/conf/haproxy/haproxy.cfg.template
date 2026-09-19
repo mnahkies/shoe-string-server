@@ -82,7 +82,7 @@ frontend external
     http-request set-header X-Forwarded-Host %[req.hdr(Host)]
     http-request set-header X-Forwarded-Uri %[path]%[var(req.questionmark)]%[query]
 
-{{AUTH_FRONTENDS}}
+{{FORWARD_AUTH_ACL}}
 
 {{USE_BACKENDS}}
 

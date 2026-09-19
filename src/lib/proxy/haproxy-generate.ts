@@ -228,7 +228,7 @@ export function renderConfig(
 const REQUIRED_PLACEHOLDERS = [
   "{{TCP_LISTEN}}",
   "{{USE_BACKENDS}}",
-  "{{AUTH_FRONTENDS}}",
+  "{{FORWARD_AUTH_ACL}}",
   "{{BACKENDS}}",
 ] as const
 
@@ -258,10 +258,10 @@ export function validateTemplatePlaceholders(
  * so a cluster can run any number of proxies without code changes.
  *
  * Template placeholders:
- *  - {{TCP_LISTEN}}    tcp stream listeners
- *  - {{USE_BACKENDS}}  http use_backend rules (websocket variants first)
- *  - {{AUTH_FRONTENDS}} forward-auth intercept rules for auth-marked hostnames
- *  - {{BACKENDS}}      backend definitions
+ *  - {{TCP_LISTEN}}        tcp stream listeners
+ *  - {{USE_BACKENDS}}      http use_backend rules (websocket variants first)
+ *  - {{FORWARD_AUTH_ACL}}  forward-auth intercept rules for auth-marked hostnames
+ *  - {{BACKENDS}}          backend definitions
  */
 export async function generateHaproxyConfig(
   applicationsDirectory: string,
@@ -293,7 +293,7 @@ export async function generateHaproxyConfig(
     template
       .replace("{{TCP_LISTEN}}", generated.tcpListen)
       .replace("{{USE_BACKENDS}}", generated.useBackends)
-      .replace("{{AUTH_FRONTENDS}}", generated.authFrontends)
+      .replace("{{FORWARD_AUTH_ACL}}", generated.authFrontends)
       .replace("{{BACKENDS}}", generated.backends),
   ].join("\n")
 
