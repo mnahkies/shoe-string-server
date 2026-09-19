@@ -1,0 +1,48 @@
+[tools]
+age = "1.3.1"
+node = "26.8.1"
+sops = "3.13.3"
+"npm:corepack" = "0.36.0"
+
+[hooks]
+postinstall = 'mise exec -- corepack enable'
+
+[settings]
+lockfile = true
+
+[tasks.install]
+description = "Installs dependencies and builds the project"
+run = '''
+#!/usr/bin/env bash
+corepack enable
+pnpm ci
+pnpm run build
+'''
+
+[tasks.lint-actions]
+run = '''
+docker run --rm -v $PWD:/code \
+  ghcr.io/zizmorcore/zizmor:1.30.1@sha256:a2eb396d886c053073405c7a980f2139ba2248ec172243cfa3841e57196e8101 \
+  --pedantic --fix /code
+'''
+
+[tasks.trufflehog]
+run = '''
+docker run --rm -it -v "$PWD:/code" \
+  trufflesecurity/trufflehog:3.97.5@sha256:1cec88f18ca39e26e04e61fe9d886c9c4e5f2fc0ba4f2ed185cac0722bd8a076 \
+  git file:///code --results=verified,unknown --since-commit origin/main
+'''
+[tasks.gitleaks]
+run = '''
+docker run --rm -it -v "$PWD:/code" \
+  zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+  git --verbose --log-opts="origin/main..HEAD" /code
+'''
+
+[tasks.trivy]
+run = '''
+docker run --rm -it -v "$PWD:/code" \
+  -v /tmp:/root/.cache/ \
+  aquasec/trivy:latest \
+  fs --scanners secret,misconfig,vuln,license --severity UNKNOWN,HIGH,CRITICAL --include-dev-deps /code
+'''

@@ -1,0 +1,41 @@
+name: haproxy
+networks:
+  main:
+    external: true
+    name: main
+services:
+  haproxy:
+    image: docker.io/library/haproxy:3.4.4-alpine@sha256:c0afc4864dca9c68694cd1290433f0ee79b5c55be80f6745a165ffe373b9a564
+    hostname: haproxy
+    container_name: haproxy
+    user: 99:99
+    security_opt:
+      - label:level:s0:c100,c200,c202
+    x-ext-proxy:
+      name: public
+    networks:
+      - main
+    ports:
+      - "${PUBLIC_IP}:${PUBLIC_HTTP_PORT}:8000"
+      - "${PUBLIC_IP}:${PUBLIC_HTTPS_PORT}:4430"
+    ulimits:
+      nofile: 10240
+    volumes:
+      - type: bind
+        source: ${DATA_BASE_PATH}/conf/haproxy
+        target: /usr/local/etc/haproxy
+        read_only: true
+        bind:
+          selinux: Z
+      - type: bind
+        source: ${DATA_BASE_PATH}/data/haproxy/invalid.crt
+        target: /etc/haproxy/ssl/certs/invalid.crt
+        read_only: true
+        bind:
+          selinux: Z
+      - type: bind
+        source: ${DATA_BASE_PATH}/data/haproxy/invalid.key
+        target: /etc/haproxy/ssl/certs/invalid.key
+        read_only: true
+        bind:
+          selinux: Z

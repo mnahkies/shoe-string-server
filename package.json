@@ -1,0 +1,65 @@
+{
+  "name": "shoe-string-server",
+  "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "shoe-string": "./dist/cli.mjs"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Michael Nahkies",
+    "email": "support@nahkies.co.nz"
+  },
+  "homepage": "https://github.com/mnahkies/shoe-string-server/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mnahkies/shoe-string-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mnahkies/shoe-string-server/issues"
+  },
+  "scripts": {
+    "generate:types": "node scripts/generate-compose-types.ts",
+    "generate:toc": "node scripts/generate-markdown-toc.mts",
+    "build": "tsc -b tsconfig.json && tsdown",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:e2e": "vitest run --project e2e",
+    "lint": "biome check --fix .",
+    "lint:ci": "biome check --error-on-warnings .",
+    "lint:duplication": "jscpd ./src --ignore 'generated/**/*' --reporters ai --mode strict --similarity 0.9",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@commander-js/extra-typings": "^15.0.0",
+    "commander": "^15.0.0",
+    "js-yaml": "^5.4.1",
+    "semver": "^7.8.5",
+    "ts-essentials": "^10.2.1",
+    "typescript": "^7.0.2",
+    "zod": "^4.6.2",
+    "zx": "^8.8.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.13",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^26.5.1",
+    "@types/semver": "^7.8.0",
+    "husky": "^9.1.7",
+    "jscpd": "^5.2.0",
+    "json-schema-to-typescript": "^16.0.0",
+    "nano-staged": "^1.0.2",
+    "remark": "^15.0.1",
+    "remark-toc": "^9.0.0",
+    "tsdown": "^0.23.0",
+    "vitest": "^4.1.11"
+  },
+  "nano-staged": {
+    "*.md": "pnpm run generate:toc",
+    "*.ts": "pnpm run lint"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.27.0+sha512.ad12821463bb143295f1fa3ecde77a6b9b97a7990386da800ff57bffc3964dc64b7b1c7559d5dbe5c337aea659ed9c8937d4370bd198ca2009bc6fa0249808e7"
+}

@@ -1,318 +1,150 @@
-# Shoe-string cluster
-* [Introduction](#introduction)
-* [Guiding principals](#guiding-principals)
-* [Contributing](#contributing)
-* [Features](#features)
-* [Considerations](#considerations)
-* [Setup](#setup)
-* [Usage / Scripts reference](#usage--scripts-reference)
-  + [`./config.sh`](#configsh)
-  + [`./start.sh`](#startsh)
-  + [`./stop.sh`](#stopsh)
-  + [`./proxy/reload-haproxy-config.sh`](#proxyreload-haproxy-configsh)
-  + [`./applications/watchdog-up.sh`](#applicationswatchdog-upsh)
-  + [`./ssl/*`](#ssl)
-* [Accessing internal services](#accessing-internal-services)
-  + [VPN Wireguard example](#vpn-wireguard-example)
-  + [SSH Tunnel example](#ssh-tunnel-example)
-* [Core Services](#core-services)
-  + [Influxdb](#influxdb)
-  + [Telegraf](#telegraf)
-  + [HAProxy](#haproxy)
-    - [haproxy-public-ssl](#haproxy-public-ssl)
-* [Default internal services](#default-internal-services)
-  + [Grafana](#grafana)
-  + [Docker Registry (`registry:2`)](#docker-registry-registry2)
-  + [NPM Registry (`verdaccio`)](#npm-registry-verdaccio)
-    * [TODO:](#todo)
-* [Future / TODO](#future--todo)
+# shoe-string-server
 
-## Introduction
+> \[!WARNING]
+> We're in the process of refining a complete rewrite of the project. `main` should be considered unstable until this is complete.
+> See the `legacy` branch for the original bash-based version of this project, which will only receive critical bug fixes.
 
-This project is an attempt to create a turn-key "cluster" that is suitable for
-small servers with limited RAM.
+## Contents
 
-The only OS level dependencies it needs to be operated are `docker` and `docker-compose`
-and I use it on a AWS Lightsail host with 1GB of RAM.
+* [Project Status](#project-status)
+  * [Rough Roadmap](#rough-roadmap)
+* [What's new? / Current Features](#whats-new--current-features)
+  * [Reworked conf repo structure](#reworked-conf-repo-structure)
+  * [Smarter reconciliation](#smarter-reconciliation)
+  * [Secrets Management](#secrets-management)
+  * [Stricter container isolation](#stricter-container-isolation)
+  * [Better packaging / update story](#better-packaging--update-story)
+  * [Simplified SSL Certificate management](#simplified-ssl-certificate-management)
+  * [More flexible ingress declaration, and proxy management](#more-flexible-ingress-declaration-and-proxy-management)
+  * [Flexible network layout](#flexible-network-layout)
+* [Additional Docs](#additional-docs)
+* [Development](#development)
+* [LLM Policy](#llm-policy)
 
-I wrote this after attempting to get "light weight" kubernetes environments going like K3s
-or KIND, and finding that the resource overhead was simply too high for my requirements 
-(`512mb` minimum, `1gb` recommended)
+## Project Status
 
-**Current architecture**
-![architecture](./architecture.svg)
+The following commands are already implemented:
 
-## Guiding principals
-- Every application runs in a `docker` container
+* `up` - starts the cluster
+* `down` - stops the cluster
+* `reconcile` - reconciles the cluster with conf repo state
+* `reload-proxy` - regenerates proxy config and signals haproxy containers
+* `secrets` - decrypts secrets using sops/age
+* `self-update` - updates the CLI to the latest version
 
-- All configuration and data is stored under a single directory structure, to make backups simple
+### Rough Roadmap
 
-- Portable across different cloud providers, minimal host pre-requisites
+* Dependency ordering, containers don't start in any specific order which can require multiple `shoe-string up` to get them all running successfully
+* `init` command / pre-defined application library
+* `lint` - static analysis of the configuration repo, checking volumes and secrets references all resolve, etc
+* HAProxy conf template could be further cleaned up / abstracted
+* `docker` / `docker-compose` compatibility testing
+* backup orchestration / tooling
+* shell completions
+* `updatecli` integration
+* More complete documentation / runbooks. Sorry this will come soon.
 
-- Provides the software that I typically want available to me when experimenting with personal projects 
-  (eg: `npm` registry, `postgres` instance)
+## What's new? / Current Features
 
-## Contributing
-I welcome feedback and improvements, especially around any security concerns. However please note,
-this project is pretty particular to my personal preferences and needs - I hope it might be of use
-to others, but I might not accept PR's that don't align with my requirements. 
+### Reworked conf repo structure
 
-Please feel free to fork and customize to your hearts desire though :) 
+* Flat applications structure, as some applications may be available on both internal and public networks
+* Top-level separation of `conf` and `data`
+  * Enables auto-classification of `conf` vs `data` volume mounts for reconciliation purposes
+  * Simplifies `.gitignore` maintenance
+* `cluster.yaml` - new configuration file
+* `secrets.encrypted.yaml` - new sops secrets file
+* `mise.toml` - mise is recommended to manage the `nodejs`, `age`, `sops` runtime dependencies.
 
-## Features
-- Public ingress on port 80 using haproxy
+Example:
 
-- Internal/private service ingress on configured port and ip address using haproxy
-  - I recommend using `wireguard` or similar to bind this to a private ip address
-
-- Private Docker registry
-
-- Private NPM registry
-
-- Metrics collected by `prometheus`, with `grafana` for dashboards
-
-- Letsencrypt certbot for automatic SSL provisioning, and renewal
-
-- "Watchdog" script suitable for running on demand, or as `CronJob` to reconcile
-  running applications with the configuration on filesystem
-
-- Helper scripts for updating application configuration with new docker tags to
-  deploy
-
-## Considerations
-- Letsencrypt will ban domains that make invalid requests to its production environment
-  it's worthwhile testing this part of things using their staging environment before running
-
-- This is held together with string, a collection of bash scripts that may or may not be portable,
-  it has been tested on Fedora 34 and AWS Linux 2.
-  
-- Whilst every effort is made to limit RAM consumption, you may still want to add swap to avoid OOM killer. Influxdb
-  in particular can consume a fair chunk of RAM. Instructions here: https://aws.amazon.com/premiumsupport/knowledge-center/ec2-memory-swap-file/
-
-## Setup
-1. Clone repo to somewhere on host or otherwise place the contents on the server
-2. Install `docker` / `docker-compose` (`./init/install-dependencies.sh`, or manually)
-3. Bootstrap data/configuration structure using `./init/create-empty-configuration-structure.sh /path/you/want/config-and-data-to-be-stored`
-4. Configure generated files
-   1. Update config.sh with correct ip addresses, ports etc
-   2. Add, remove, or customise applications in `applications-internal` / `applications-public`
-5. Run ./start.sh
-
-## Usage / Scripts reference
-There are a number of bash scripts in this project, I give a brief overview below,
-but you should probably read through them before attempting to use in production.
-
-### `./config.sh`
-- Contains the path to the configuration directory. Generated by `./init/create-empty-configuration-structure.sh`
-
-### `./start.sh`
-- Generates haproxy configuration
-- Creates the docker networks
-- Start services defined in `docker-compose.yaml`
-- Starts application using `applications/watchdog-up.sh`
-
-### `./stop.sh`
-- Stop services defined in `docker-compose.yaml`
-- Stop applications using `applications/watchdog-down.sh`
-- Clean up unused networks
-
-### `./proxy/reload-haproxy-config.sh`
-- Called automatically by `start.sh` and ssl certificate scripts
-- Re-generates `haproxy.cfg` files, and sends a signal to the containers to reload their config.
-- Can be called manually if changes to the template or applications yaml files have been made
-
-### `./applications/watchdog-up.sh`
-- Suitable for calling as a `CronJob` or manually after making changes to the application yaml
-  configuration files, attempts to reconcile running containers with the configuration state.
-
-### `./ssl/*`
-
-TODO: write documentation
-
-## Accessing internal services
-There are two main options for configuring this securely:
-- Bind to private ip address and access via VPN
-- Bind to localhost / **firewalled** port and access via SSH tunnel
-
-**Note:** these services are only exposed over `http` but I might add support for
-exposing them over `https` as well since `docker` in particular gets a bit naggy about "insecure"
-registries. It is assumed that you will only make them accessible via secure channels
-like the examples below.
-
-### VPN Wireguard example
-**Prerequisites:** `wireguard-tools` installed, Linux kernel >= 5.6 or `wireguard` installed as a kernel module.
-If you're not using Linux on both ends then you'll need to consult your platforms documentation.
-
-1. On both host and client generate public/private key pairs:
-   (you'll want to delete these files at the end)
- ```shell
-wg genkey | tee privatekey | wg pubkey > publickey
-```
-
-2. Create server config:
-
-Create file /etc/wireguard/wg0.conf:
- ```shell
-[Interface]
-Address = 10.12.0.1
-PrivateKey = <SERVER_PRIVATE_KEY>
-ListenPort = 51820
-
-[Peer]
-PublicKey = <CLIENT_PUBLIC_KEY>
-AllowedIPs = 10.12.0.1/24
-```
-3. Open port `51820` on your servers firewall
-
-4. Bring interface up on server
 ```shell
-sudo wg-quick up wg0
-sudo systemctl enable wg-quick@wg0 # optional, enable bringing up at boot-time
+├── applications
+|   ├── example.yaml
+|   ├── haproxy-internal.yaml
+|   └── haproxy-public.yaml
+├── conf
+|   ├── example
+|   |   └── whatever.yaml
+|   ├── haproxy
+|       ├── internal
+|       |   ├── directory.html
+|       |   ├── haproxy.cfg
+|       |   └── haproxy.cfg.template
+|       └── public
+|           ├── haproxy.cfg
+|           └── haproxy.cfg.template
+├── data
+|   ├── example
+|       └── whatever.sqlite
+├── mise.lock
+├── mise.toml
+├── cluster.yaml
+├── secrets.encrypted.yaml
 ```
 
-5. Create client config
+### Smarter reconciliation
 
-Create file /etc/wireguard/wg0.conf:
- ```shell
- [Interface]
-Address = 10.12.0.2
-PrivateKey = <CLIENT_PRIVATE_KEY>
+Hashes container configuration volumes and injects as labels, such that compose reconciliation will detect changes.
+This means that we only restart containers that have changed, instead of all of them as in the legacy version.
 
-[Peer]
-PublicKey = <SERVER_PUBLIC_KEY>
-Endpoint = <SERVER_PUBLIC_IP>:51820
-AllowedIPs = 10.12.0.2/24
+### Secrets Management
 
-PersistentKeepalive = 25
+Formalizes secrets management using [sops](https://github.com/mozilla/sops) and [age](https://github.com/FiloSottile/age),
+to inject [compose secrets](https://docs.docker.com/compose/how-tos/use-secrets/)
+
+### Stricter container isolation
+
+Leverages [userns](https://docs.podman.io/en/stable/markdown/podman-run.1.html#userns-mode) and `:Z` SELinux relabelling,
+to isolate containers from the host, and each-other.
+
+Explicit SELinux labels are preferred, eg:
+
+```yaml
+    security_opt:
+      - label:level:s0:c100,c209,c211
 ```
 
-6. Bring interface up on client and test
-```shell
-sudo wg-quick up wg0
-sudo systemctl enable wg-quick@wg0 # optional, enable bringing up at boot-time
-ping 10.12.0.1
-```
+To give each container a stable labeling, such that we don't have to relabel its volumes on every recreation.
 
-### SSH Tunnel example
-**Assumptions:** ingress configured to 127.0.0.1:8080
+### Better packaging / update story
 
-Create tunnel using ssh, eg:
-```shell
-ssh user@host.com -L 127.0.0.1:8080:127.0.0.1:8080
-```
+New self update command is able to track `main`, or check `npm` for updates.
 
-Then services are available via port 8080, with the domains configured in the `haproxy-internal/applications.js`
-file. The easiest way to make this available in your browser is to add entries to your
-hosts file, or use something like `dnsmasq`
+### Simplified SSL Certificate management
 
-Eg: `/etc/hosts` file
-```shell
-127.0.0.1   grafana.internal.example.com
-127.0.0.1   npm.internal.example.com
-127.0.0.1   docker.internal.example.com
-```
+We now use [lego](https://go-acme.github.io/lego/) exclusively and use a `lego.yml` conf file. Individual certificates are mounted directly
+to the proxy containers that require it, with no intermediate processing required. By ditching HTTP-01 challenges, we can issue certs before
+starting the cluster for the first time.
 
-## Core Services
-There are a number of "core" services managed by `docker-compose`. This is distinct from application services
-that you want to deploy and make available.
+### More flexible ingress declaration, and proxy management
 
-### HAProxy
-There are two instances of haproxy in use, one for public ingress, and one for private/internal ingress.
+The CLI no longer directly controls any container definitions - this is completely delegated to your `conf` repository, meaning you have full
+control of the HAProxy versioning and updates.
 
-The configuration is generated from the docker-compose yaml files in the `applications-public` / `applications-internal`
-directories. Specifically:
+Additionally, the compose extensions now support more complex ingress configurations (multiple ports, raw tcp, wss, forward-auth).
+See [docker-compose-extensions.ts](./src/types/docker-compose-extensions.ts)
 
-- A custom top level property `x-external-host-names` is used to know which vhosts to proxy
-  to that application.
+### Flexible network layout
 
-- A service named `application` is expected to exist, and the `hostname` of this is used to
-  know which container to proxy to.
+Similar to the proxy definitions moving into your `conf` repository, so do all network definitions. This means there are no longer
+hardcoded assumptions about the network layout, and you can define your own networks as required.
 
-- A custom top level property `x-container-port` is used to know which port to proxy to, or
-  default to 80.
+## Additional Docs
 
-If there are no external host names declared, or no application service is found, the file 
-is skipped, and not included in the proxy.
+* [install.md](./docs/install.md)
+* [dns.md](./docs/dns.md)
+* [postres.md](./docs/postgres.md)
 
-Any customizations you need to make should be made to the template rather to avoid them
-being overwritten.
+## Development
 
-The public proxy exposes stats using a unix socket, mounted to `haproxy-public-stats` and 
-read from by telegraf.
+* [Contributing](CONTRIBUTING.md): setup, test selection, formatting, and review checklist.
+* [Agent guidance](AGENTS.md): repository map, implementation constraints, and verification instructions.
+* [License](LICENSE).
 
-For the public ingress, SSL certificates are read from `haproxy-public-ssl`, noting that haproxy
-requires the public and private portion to be stored in the same file.
+## LLM Policy
 
-Originals are managed by certbot and stored in `letsencrypt/etc`
+We have used LLM's in the development of this project and are doing our best to find ways to work effectively with them.
+That said, we still expect human judgment and care to be exercised and will not entertain slop.
 
-#### haproxy-public-ssl
-This folder is where the concatenated ssl certificate + private keys will be
-stored, and loaded by the public facing haproxy instance.
-
-Due to an annoying "feature" of haproxy where it will refuse to start if this
-directly is empty, which is likely is when first bootstrapping your server,
-there is a `invalid.pem` file which contains a self-signed certificate for the
-domain `invalid.`
-
-This avoids the chicken and egg situation where you either need to first start
-with ssl disabled then restart after certificates have been populated, etc
-
-As per [RFC 6761](https://datatracker.ietf.org/doc/html/rfc6761) section 6.4,
-`invalid.` is guaranteed to never exist, and once you have your own certificates
-in this folder, it is safe to delete this placeholder certificate.
-
-## Default internal services
-The configuration template defines some default internal services, including:
-- Prometheus / Node Exporter / Postgres Exporter / cadvisor (metrics collection)
-- Grafana (dashboards / monitoring)
-- Private NPM Registry (`verdaccio`)
-- Private Docker Registry (`registry:2`)
-- Postgres
-
-**You'll need to modify the external hostnames in the yaml files to suit your environment**
-
-**Disabling a service:** simply delete it's yaml file from `applications-internal`
-
-### Grafana
-At first start you will need to configure grafana with a connection to the prometheus datasource, and
-create / import some dashboards.
-
-Datasource configuration:
-- Type `prometheus`
-- URL: `http://monitoring_prometheus:9090`
-- Authentication disabled by default
-
-I recommend importing these dashboards to get started:
-- System: https://grafana.com/grafana/dashboards/1860-node-exporter-full/
-- Docker: https://grafana.com/grafana/dashboards/16527-docker-monitoring/
-- Postgres: https://grafana.com/grafana/dashboards/14114-postgres-overview/
-- HAProxy: https://grafana.com/grafana/dashboards/12693-haproxy-2-full/
-
-#### Postgres Exporter configuration
-You'll need to create a user for the exporter to use, and then configure it's credentials in `prometheus.yaml`
-```sql
-create user postgres_exporter with login password '<password>';
-grant pg_monitor to postgres_exporter;
-grant connect on database postgres to postgres_exporter;
-```
-
-### Docker Registry (`registry:2`)
-
-TODO: write documentation
-
-### NPM Registry (`verdaccio`)
-
-TODO: write documentation
-
-
-## Future / TODO
-- Get rid of the certificate concatenation, haproxy no longer requires this
-  since version 2.2 🥳
-- find a way to allow issuing of SSL certs for private/internal services?
-  - would probably have to go the DNS TXT record route, but AFAIK there is not
-    a standardised API for this that can be reasonably expected to work across providers 😢
-- rework data directory structure by be split by configuration / data, eg:
-  ```shell
-  /data/conf/
-  /data/data/
-  ```
+Please see the [Jellyfin LLM Policy](https://jellyfin.org/docs/general/contributing/llm-policies/) for the general vibe of our expectations.

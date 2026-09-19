@@ -1,0 +1,10 @@
+appsDir: ./apps
+secretsFile: ./secrets.encrypted.yaml
+proxies:
+  - name: public
+    containerName: haproxy
+    conf: ./conf/haproxy
+environment:
+  PUBLIC_IP: "127.0.0.1"
+  PUBLIC_HTTP_PORT: "8080"
+  PUBLIC_HTTPS_PORT: "8081"

@@ -1,0 +1,7 @@
+pnpm-lock.yaml linguist-generated
+src/generated/**/* linguist-generated
+e2e/conf/haproxy/dhparam linguist-generated
+
+e2e/conf/haproxy/auth-request.lua linguist-vendored
+e2e/conf/haproxy/haproxy-lua-http/*.lua linguist-vendored
+e2e/conf/haproxy/json/*.lua linguist-vendored
