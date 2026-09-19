@@ -113,9 +113,7 @@ export async function resolveConfig(
   }
 }
 
-export async function loadEnv(
-  config: ServerConfig,
-): Promise<Record<string, string>> {
+function loadEnvFromConfig(config: ServerConfig): Record<string, string> {
   return {
     ...config.environment,
     DATA_BASE_PATH: config.rootConfDir,
@@ -125,17 +123,17 @@ export async function loadEnv(
 /**
  * Builds process environment with strict precedence:
  * 1. Cluster configuration environment (config.environment + DATA_BASE_PATH)
- * 2. Decrypted secrets (highest precedence)
+ * 2. Decrypted secrets
  * 3. Process environment (process.env)
  */
 export function buildProcessEnv(
-  env: Record<string, string>,
+  config: ServerConfig,
   secrets: Record<string, string>,
-  baseEnv: NodeJS.ProcessEnv = process.env,
+  processEnv: NodeJS.ProcessEnv = process.env,
 ): Record<string, string | undefined> {
   return {
-    ...env,
+    ...loadEnvFromConfig(config),
     ...secrets,
-    ...baseEnv,
+    ...processEnv,
   }
 }

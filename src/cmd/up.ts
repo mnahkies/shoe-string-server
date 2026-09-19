@@ -2,7 +2,6 @@ import {$} from "zx"
 import {
   buildProcessEnv,
   type GlobalOptions,
-  loadEnv,
   resolveConfig,
   type ServerConfig,
 } from "../config.ts"
@@ -76,9 +75,8 @@ export async function up(
   const fs = getFsAdaptor()
   const files = await resolveAppTargets(config.appsDir, options.targets ?? [])
 
-  const env = await loadEnv(config)
   const secrets = await loadSecrets({file: config.secretsFile})
-  const envWithSecrets = buildProcessEnv(env, secrets)
+  const envWithSecrets = buildProcessEnv(config, secrets)
 
   if (files.length === 0) {
     console.log("No applications to start")

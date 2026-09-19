@@ -2,7 +2,6 @@ import {$} from "zx"
 import {
   buildProcessEnv,
   type GlobalOptions,
-  loadEnv,
   resolveConfig,
   type ServerConfig,
 } from "../config.ts"
@@ -22,10 +21,9 @@ export async function down(
   options: DownOptions = {},
 ): Promise<void> {
   const files = await resolveAppTargets(config.appsDir, options.targets ?? [])
-  const env = await loadEnv(config)
-  const secrets = await loadSecrets({file: config.secretsFile})
 
-  const envWithSecrets = buildProcessEnv(env, secrets)
+  const secrets = await loadSecrets({file: config.secretsFile})
+  const envWithSecrets = buildProcessEnv(config, secrets)
 
   for (const file of files) {
     console.log(`Stopping application (${file})`)
