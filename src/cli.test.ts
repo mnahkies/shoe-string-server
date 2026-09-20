@@ -1,13 +1,15 @@
-import {describe, expect, it, vi} from "vitest"
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {createProgram, createProgramWithCompletions, main} from "./cli.ts"
-import * as downModule from "./cmd/down.ts"
+import {downCmd} from "./cmd/down.ts"
 import * as reconcileModule from "./cmd/reconcile.ts"
 import * as reloadHaproxyModule from "./cmd/reload-haproxy.ts"
 import * as loadSecretsModule from "./cmd/secrets.ts"
 import {upCmd} from "./cmd/up.ts"
 import type {ServerConfig} from "./config.ts"
+import {resetFsAdaptor, setFsAdaptor} from "./lib/file-system/fs-adaptor.ts"
+import {InMemoryFsAdaptor} from "./lib/file-system/in-memory.fs-adaptor.ts"
 
-const mockConfig = {
+const mockConfig: ServerConfig = {
   rootConfDir: "/dummy",
   secretsFile: "/dummy/secrets.yaml",
   appsDir: "/dummy/applications",
@@ -81,6 +83,59 @@ describe("CLI Program", () => {
     expect(await getCompletionOutput(["up", "--"], mockConfig)).toContain(
       "--build\tBuild images before starting containers.",
     )
+    expect(await getCompletionOutput(["up", "--"], mockConfig)).toContain(
+      "--debug\tEnable debug logging",
+    )
+  })
+
+  it("completes options for the down command", async () => {
+    expect(await getCompletionOutput(["down", "-"], mockConfig)).toBe(
+      "-h\tdisplay help for command\n:4",
+    )
+    expect(await getCompletionOutput(["down", "--"], mockConfig)).toContain(
+      "--help\tdisplay help for command",
+    )
+  })
+
+  describe("dynamic completions", () => {
+    let fsAdaptor: InMemoryFsAdaptor
+
+    beforeEach(async () => {
+      fsAdaptor = new InMemoryFsAdaptor()
+      setFsAdaptor(fsAdaptor)
+
+      await fsAdaptor.writeFile("/dummy/applications/app1.yaml", "")
+      await fsAdaptor.writeFile("/dummy/applications/app2.yaml", "")
+      await fsAdaptor.writeFile("/dummy/applications/database.yaml", "")
+    })
+
+    afterEach(() => {
+      resetFsAdaptor()
+    })
+
+    it("completes application targets dynamically for 'up'", async () => {
+      const output = await getCompletionOutput(["up", ""], mockConfig)
+
+      expect(output).toContain("app1.yaml")
+      expect(output).toContain("app2.yaml")
+      expect(output).toContain("database.yaml")
+    })
+
+    it("completes application targets dynamically for 'down'", async () => {
+      const output = await getCompletionOutput(["down", ""], mockConfig)
+
+      expect(output).toContain("app1.yaml")
+      expect(output).toContain("app2.yaml")
+      expect(output).toContain("database.yaml")
+    })
+
+    it("doesn't crash when config is undefined or applications directory is empty", async () => {
+      expect(await getCompletionOutput(["up", ""], undefined)).toBe(":4")
+      expect(await getCompletionOutput(["down", ""], undefined)).toBe(":4")
+
+      expect(await getCompletionOutput(["up", ""], mockConfig)).toBe(":4")
+      expect(await getCompletionOutput(["down", ""], mockConfig)).toBe(":4")
+    })
   })
 
   it("does not execute commands while completing", async () => {
@@ -128,7 +183,7 @@ describe("CLI Program", () => {
   })
 
   it("parses and propagates options for 'down' command", async () => {
-    const spy = vi.spyOn(downModule, "downCommand").mockResolvedValue(undefined)
+    const spy = vi.spyOn(downCmd, "action").mockResolvedValue(undefined)
     const program = createProgram()
 
     await program.parseAsync([

@@ -1,3 +1,5 @@
+import path from "node:path"
+import type {Command} from "@bomb.sh/tab"
 import {$} from "zx"
 import {
   buildProcessEnv,
@@ -7,6 +9,7 @@ import {
 } from "../config.ts"
 import {resolveAppTargets} from "../lib/compose-files/compose-files.ts"
 import {loadSecrets} from "../lib/secrets.ts"
+import type {Cmd} from "./types.ts"
 
 export interface DownOptions {
   targets?: string[]
@@ -45,3 +48,38 @@ export async function downCommand(
   const config = await resolveConfig(opts)
   await down(config, {targets: opts.targets})
 }
+
+export async function registerCompletions(
+  cmd: Command | undefined,
+  config: ServerConfig | undefined,
+) {
+  if (!cmd) {
+    throw new Error("couldn't find command")
+  }
+
+  const possibleTargets = config
+    ? await resolveAppTargets(config.appsDir, [])
+    : []
+
+  // there's no good way to communicate the lack of options, so just return
+  if (!possibleTargets.length) {
+    return
+  }
+
+  const targetsArgument = cmd.arguments.get("targets")
+
+  if (!targetsArgument) {
+    throw new Error("couldn't find targets argument")
+  }
+
+  targetsArgument.handler = (complete) => {
+    for (const target of possibleTargets) {
+      complete(path.basename(target), "")
+    }
+  }
+}
+
+export const downCmd = {
+  action: downCommand,
+  registerCompletions,
+} satisfies Cmd

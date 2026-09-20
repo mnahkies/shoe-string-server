@@ -5,7 +5,7 @@ import tab from "@bomb.sh/tab/commander"
 import {Command} from "commander"
 import {z} from "zod"
 import packageJson from "../package.json" with {type: "json"}
-import {downCommand} from "./cmd/down.ts"
+import {downCmd} from "./cmd/down.ts"
 import {reconcileCommand} from "./cmd/reconcile.ts"
 import {reloadHaproxyCommand} from "./cmd/reload-haproxy.ts"
 import {loadSecretsCommand} from "./cmd/secrets.ts"
@@ -82,7 +82,7 @@ export function createProgram(): Command {
     )
     .argument("[targets...]", "Application(s) to stop; defaults to all")
     .action((targets, _, cmd) =>
-      downCommand({...cmd.optsWithGlobals(), targets}),
+      downCmd.action({...cmd.optsWithGlobals(), targets}),
     )
 
   program
@@ -122,7 +122,7 @@ export async function createProgramWithCompletions(
   const completion = tab(program)
 
   await upCmd.registerCompletions(completion.commands.get("up"), config)
-  // todo: downCmd
+  await downCmd.registerCompletions(completion.commands.get("down"), config)
 
   return program
 }
