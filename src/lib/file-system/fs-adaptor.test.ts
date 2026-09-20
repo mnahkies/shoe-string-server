@@ -1,6 +1,6 @@
 import os from "node:os"
 import path from "node:path"
-import {afterEach, describe, expect, it} from "vitest"
+import {afterEach, describe, expect, it, vi} from "vitest"
 import {getFsAdaptor, resetFsAdaptor, setFsAdaptor} from "./fs-adaptor.ts"
 import {InMemoryFsAdaptor} from "./in-memory.fs-adaptor.ts"
 import {NodeFsAdaptor} from "./node.fs-adaptor.ts"
@@ -175,14 +175,12 @@ describe("fs-adaptor factory and global state", () => {
   })
 
   it("returns NodeFsAdaptor regardless of NODE_ENV; e2e code opts into in-memory explicitly", () => {
-    const prev = process.env.NODE_ENV
-    process.env.NODE_ENV = "test"
+    vi.stubEnv("NODE_ENV", "test")
     try {
       resetFsAdaptor()
       const adaptor = getFsAdaptor()
       expect(adaptor).toBeInstanceOf(NodeFsAdaptor)
     } finally {
-      process.env.NODE_ENV = prev
       resetFsAdaptor()
     }
   })

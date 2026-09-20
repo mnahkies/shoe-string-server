@@ -48,6 +48,7 @@
     },
     "rules": {
       "complexity": {
+        "useLiteralKeys": "off",
         "noForEach": "error"
       },
       "correctness": {

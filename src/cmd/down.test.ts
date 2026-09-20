@@ -7,7 +7,7 @@ import {down} from "./down.ts"
 
 interface ExecutedCommand {
   cmd: string
-  env?: Record<string, string | undefined>
+  env?: Record<string, string | undefined> | undefined
 }
 
 const executedCommands: ExecutedCommand[] = []
@@ -87,19 +87,19 @@ describe("down command", () => {
 
     expect(executedCommands).toHaveLength(3)
 
-    expect(executedCommands[0].cmd).toBe(
+    expect(executedCommands[0]?.cmd).toBe(
       `docker compose --file ${file1} down --remove-orphans`,
     )
-    expect(executedCommands[0].env?.SECRET_FOO).toBe("bar")
-    expect(executedCommands[0].env?.CUSTOM_ENV).toBe("hello")
+    expect(executedCommands[0]?.env?.["SECRET_FOO"]).toBe("bar")
+    expect(executedCommands[0]?.env?.["CUSTOM_ENV"]).toBe("hello")
 
-    expect(executedCommands[1].cmd).toBe(
+    expect(executedCommands[1]?.cmd).toBe(
       `docker compose --file ${file2} down --remove-orphans`,
     )
-    expect(executedCommands[1].env?.SECRET_FOO).toBe("bar")
-    expect(executedCommands[1].env?.CUSTOM_ENV).toBe("hello")
+    expect(executedCommands[1]?.env?.["SECRET_FOO"]).toBe("bar")
+    expect(executedCommands[1]?.env?.["CUSTOM_ENV"]).toBe("hello")
 
-    expect(executedCommands[2].cmd).toBe("docker network prune -f")
+    expect(executedCommands[2]?.cmd).toBe("docker network prune -f")
   })
 
   it("stops only specified target applications and does not prune networks", async () => {
@@ -122,10 +122,10 @@ describe("down command", () => {
 
     expect(executedCommands).toHaveLength(2)
 
-    expect(executedCommands[0].cmd).toBe(
+    expect(executedCommands[0]?.cmd).toBe(
       `docker compose --file ${file1} down --remove-orphans`,
     )
-    expect(executedCommands[1].cmd).toBe(
+    expect(executedCommands[1]?.cmd).toBe(
       `docker compose --file ${file3} down --remove-orphans`,
     )
     expect(executedCommands.some((c) => c.cmd.includes("network prune"))).toBe(

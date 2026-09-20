@@ -152,6 +152,7 @@ postgres:
 
       const secrets = await loadSecrets({
         file: encryptedFile,
+        filter: undefined,
         decrypt: mockDecrypt,
       })
 

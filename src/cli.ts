@@ -13,8 +13,8 @@ import {resolveConfig, type ServerConfig} from "./config.ts"
  */
 export function parseMinimalConfigArgs(args: string[]) {
   const schema = z.object({
-    dataDir: z.string().optional(),
-    secretsFile: z.string().optional(),
+    dataDir: z.union([z.string(), z.undefined()]),
+    secretsFile: z.union([z.string(), z.undefined()]),
   })
 
   const {values} = parseArgs({
@@ -103,13 +103,13 @@ export function createProgram(maybeConfig: MaybeConfig): Command {
   program
     .command("reconcile")
     .description("Fetch git updates and reconcile applications")
-    .action((_, cmd) =>
-      cmds.reconcile.action(
-        unwrapConfig(maybeConfig),
-        undefined,
-        cmd.optsWithGlobals(),
-      ),
-    )
+    .action((_, cmd) => {
+      const opts = cmd.optsWithGlobals()
+      return cmds.reconcile.action(unwrapConfig(maybeConfig), undefined, {
+        dataDir: opts.dataDir,
+        secretsFile: opts.secretsFile,
+      })
+    })
 
   program
     .command("reload-proxy")

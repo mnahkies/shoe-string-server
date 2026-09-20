@@ -73,7 +73,10 @@ export async function up(
   const fs = getFsAdaptor()
   const files = await resolveAppTargets(config.appsDir, options.targets ?? [])
 
-  const secrets = await loadSecrets({file: config.secretsFile})
+  const secrets = await loadSecrets({
+    file: config.secretsFile,
+    filter: undefined,
+  })
   const envWithSecrets = buildProcessEnv(config, secrets)
 
   if (files.length === 0) {

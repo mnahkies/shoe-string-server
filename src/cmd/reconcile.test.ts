@@ -85,7 +85,10 @@ describe("reconcile command", () => {
   let fsAdaptor: InMemoryFsAdaptor
   const rootConfDir = "/test/cluster"
 
-  const globalOpts: GlobalOptions = {dataDir: rootConfDir}
+  const globalOpts: GlobalOptions = {
+    dataDir: rootConfDir,
+    secretsFile: undefined,
+  }
 
   const baseConfig: ServerConfig = {
     rootConfDir,
