@@ -12,23 +12,23 @@ Keep changes scoped to the requested task and preserve unrelated local work.
 
 ## Repository map
 
-| Path                                     | Responsibility                                                                              |
-|------------------------------------------|---------------------------------------------------------------------------------------------|
-| `src/cli.ts`                             | Commander registration and global options; actual executable name is `shoe-string`.         |
-| `src/config.ts`                          | Strict cluster schema, path resolution, and subprocess environment construction.            |
-| `src/cmd`                                | Individual cli command implementations                                                      |
-| `src/generated/types/docker-compose.ts`  | Generated upstream Compose definitions; do not hand-edit.                                   |
-| `src/lib/compose-files/`                 | Compose discovery/validation, target selection, volume preparation, and generated overlays. |
-| `src/lib/file-system/`                   | `FsAdaptor`, real filesystem implementation, and in-memory implementation.                  |
-| `src/lib/networks/`                      | External bridge-network provisioning.                                                       |
-| `src/lib/proxy/`                         | Proxy discovery, routing bindings, and HAProxy template rendering.                          |
-| `src/lib/self-update/`                   | Helpers to support self-update functionality.                                               |
-| `src/lib/secrets.ts`                     | SOPS decryption, flattening, and filtering.                                                 |
-| `src/testing/`                           | Shared Compose fixture builders for unit tests.                                             |
-| `src/types/docker-compose-extensions.ts` | Handwritten project-specific Compose types and schemas.                                     |
-| `src/utils`                              | General utility functions                                                                   |
-| `e2e/`                                   | Real container/SELinux tests and public test fixtures.                                      |
-| `scripts/`                               | Build scripts.                                                                              |
+| Path                                     | Responsibility                                                                                                   |
+|------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `src/cli.ts`                             | Commander registration and global options; actual executable name is `shoe-string`.                              |
+| `src/config.ts`                          | Strict cluster schema, path resolution, and subprocess environment construction.                                 |
+| `src/cmd`                                | Individual cli command implementations                                                                           |
+| `src/generated/types/docker-compose.ts`  | Generated upstream Compose definitions; do not hand-edit.                                                        |
+| `src/lib/compose-files/`                 | Compose discovery/validation, target selection, volume preparation, dependency ordering, and generated overlays. |
+| `src/lib/file-system/`                   | `FsAdaptor`, real filesystem implementation, and in-memory implementation.                                       |
+| `src/lib/networks/`                      | External bridge-network provisioning.                                                                            |
+| `src/lib/proxy/`                         | Proxy discovery, routing bindings, and HAProxy template rendering.                                               |
+| `src/lib/self-update/`                   | Helpers to support self-update functionality.                                                                    |
+| `src/lib/secrets.ts`                     | SOPS decryption, flattening, and filtering.                                                                      |
+| `src/testing/`                           | Shared Compose fixture builders for unit tests.                                                                  |
+| `src/types/docker-compose-extensions.ts` | Handwritten project-specific Compose types and schemas.                                                          |
+| `src/utils`                              | General utility functions                                                                                        |
+| `e2e/`                                   | Real container/SELinux tests and public test fixtures.                                                           |
+| `scripts/`                               | Build scripts.                                                                                                   |
 
 ## Working conventions
 
@@ -45,6 +45,7 @@ Keep changes scoped to the requested task and preserve unrelated local work.
 * `buildProcessEnv` currently lets inherited process variables override decrypted secrets, which override cluster environment. Preserve this behavior unless the task explicitly changes it; its nearby comment is not a substitute for reading the implementation.
 * Loaded Compose specifications are deeply frozen. Preserve source YAML/comments by writing separate generated overlays rather than rewriting user-authored files. Compose and HAProxy outputs use temporary-file-plus-rename writes; retain atomic replacement.
 * Application discovery is recursive, sorted, and excludes `overlays` directories. Targets select discovered Compose files, are deduplicated, and fail when unmatched; they are not Compose service selectors.
+* `up` starts targets in `x-requires` dependency order (independents in sorted order); `down` stops them in reverse. Dependencies outside the target selection are never started or stopped by these commands; `up` warns when such a dependency isn't already running, and circular dependencies abort with an error.
 * `up` creates required external networks and generates all discovered proxy configurations before starting any selected container. After startup it reloads only proxies whose own Compose file was started; `reload-proxy` explicitly reloads all discovered proxies.
 * Proxy names and proxy container names must be unique. The four HAProxy template placeholders must each occur exactly once. Preserve proxy-specific routing and hand-authored template block handling.
 * Secret flattening rejects arrays, invalid environment-variable names, and collisions. Preserve shell escaping when formatting exports, and keep key-only listing separate from plaintext value output.

@@ -1,6 +1,7 @@
 import path from "node:path"
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import type {ServerConfig} from "../config.ts"
+import {getRunningComposeFiles} from "../lib/docker-cli.ts"
 import {resetFsAdaptor, setFsAdaptor} from "../lib/file-system/fs-adaptor.ts"
 import {InMemoryFsAdaptor} from "../lib/file-system/in-memory.fs-adaptor.ts"
 import {createTestComposeFile} from "../testing/compose-fixture.ts"
@@ -87,6 +88,10 @@ vi.mock("../lib/secrets.ts", () => ({
 
 vi.mock("../lib/networks/create-networks.ts", () => ({
   createNetworks: vi.fn(async () => {}),
+}))
+
+vi.mock("../lib/docker-cli.ts", () => ({
+  getRunningComposeFiles: vi.fn(async () => []),
 }))
 
 describe("up command", () => {
@@ -271,5 +276,88 @@ describe("up command", () => {
     expect(composeCommand?.env?.["AMBIENT_VAR"]).toBe("ambient_val")
     expect(composeCommand?.env?.["CUSTOM_VAR"]).toBe("ambient_custom")
     expect(composeCommand?.env?.["SECRET_FOO"]).toBe("ambient_secret")
+  })
+
+  it("starts applications in dependency order", async () => {
+    vi.mocked(getRunningComposeFiles).mockResolvedValue([])
+
+    const database = await createTestComposeFile(
+      path.join(appsDir, "database.yaml"),
+    )
+    const api = await createTestComposeFile(path.join(appsDir, "api.yaml"), {
+      "x-requires": [database],
+    })
+    const worker = await createTestComposeFile(
+      path.join(appsDir, "worker.yaml"),
+      {"x-requires": [api]},
+    )
+
+    await up(baseConfig)
+
+    const composeCommands = executedCommands.filter((c) =>
+      c.cmd.startsWith("docker compose"),
+    )
+    expect(composeCommands.map((c) => c.cmd)).toEqual([
+      expect.stringContaining(`-f ${database}`),
+      expect.stringContaining(`-f ${api}`),
+      expect.stringContaining(`-f ${worker}`),
+    ])
+  })
+
+  it("warns but still starts when a dependency isn't targeted or running", async () => {
+    vi.mocked(getRunningComposeFiles).mockResolvedValue([])
+
+    const database = await createTestComposeFile(
+      path.join(appsDir, "database.yaml"),
+    )
+    const api = await createTestComposeFile(path.join(appsDir, "api.yaml"), {
+      "x-requires": [database],
+    })
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    try {
+      await up(baseConfig, {targets: ["api"]})
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        `Dependency ${path.basename(database)} not targeted, and isn't already running. It will not be started.`,
+      )
+    } finally {
+      warnSpy.mockRestore()
+    }
+
+    const composeCommands = executedCommands.filter((c) =>
+      c.cmd.startsWith("docker compose"),
+    )
+    expect(composeCommands).toHaveLength(1)
+    expect(composeCommands[0]?.cmd).toContain(`-f ${api}`)
+  })
+
+  it("doesn't warn when an untargeted dependency is already running", async () => {
+    const database = await createTestComposeFile(
+      path.join(appsDir, "database.yaml"),
+    )
+    const api = await createTestComposeFile(path.join(appsDir, "api.yaml"), {
+      "x-requires": [database],
+    })
+    vi.mocked(getRunningComposeFiles).mockResolvedValue([database])
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+
+    try {
+      await up(baseConfig, {targets: ["api"]})
+
+      expect(warnSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining("Dependency"),
+      )
+    } finally {
+      warnSpy.mockRestore()
+    }
+
+    const composeCommands = executedCommands.filter((c) =>
+      c.cmd.startsWith("docker compose"),
+    )
+    expect(composeCommands).toHaveLength(1)
+    expect(composeCommands[0]?.cmd).toContain(`-f ${api}`)
   })
 })

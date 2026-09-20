@@ -16,6 +16,7 @@
   * [Better packaging / update story](#better-packaging--update-story)
   * [Simplified SSL Certificate management](#simplified-ssl-certificate-management)
   * [More flexible ingress declaration, and proxy management](#more-flexible-ingress-declaration-and-proxy-management)
+  * [Dependency aware start/stop ordering](#dependency-aware-startstop-ordering)
   * [Flexible network layout](#flexible-network-layout)
   * [Shell completions](#shell-completions)
 * [Additional Docs](#additional-docs)
@@ -35,7 +36,6 @@ The following commands are already implemented:
 
 ### Rough Roadmap
 
-* Dependency ordering, containers don't start in any specific order which can require multiple `shoe-string up` to get them all running successfully
 * `init` command / pre-defined application library
 * `lint` - static analysis of the configuration repo, checking volumes and secrets references all resolve, etc
 * HAProxy conf template could be further cleaned up / abstracted
@@ -137,6 +137,17 @@ control of the HAProxy versioning and updates.
 
 Additionally, the compose extensions now support more complex ingress configurations (multiple ports, raw tcp, wss, forward-auth).
 See [docker-compose-extensions.ts](./src/types/docker-compose-extensions.ts)
+
+### Dependency aware start/stop ordering
+
+Applications can declare dependencies on other applications with the `x-requires` compose extension:
+
+```yaml
+x-requires:
+  - database.yaml
+```
+
+`shoe-string up` starts applications in dependency order, and `down` stops them in reverse. Entries are resolved relative to the Compose file that declares them, so sibling stacks are referenced by bare file name. Dependencies outside the current selection are left untouched (`up` warns when such a dependency isn't already running), and circular dependencies abort with an error.
 
 ### Flexible network layout
 

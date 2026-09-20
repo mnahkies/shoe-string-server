@@ -1,5 +1,9 @@
 import path from "node:path"
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import {
+  generateOverlayFileForComposeFile,
+  getOverlayFilePathForComposeFile,
+} from "../lib/compose-files/generated-overlay.ts"
 import {resetFsAdaptor, setFsAdaptor} from "../lib/file-system/fs-adaptor.ts"
 import {InMemoryFsAdaptor} from "../lib/file-system/in-memory.fs-adaptor.ts"
 import {createTestComposeFile} from "../testing/compose-fixture.ts"
@@ -13,12 +17,15 @@ interface ExecutedCommand {
 const executedCommands: ExecutedCommand[] = []
 
 vi.mock("zx", () => {
+  const formatArg = (arg: unknown): string =>
+    Array.isArray(arg) ? arg.join(" ") : String(arg)
+
   const custom$ = vi.fn((pieces: TemplateStringsArray, ...args: unknown[]) => {
     let full = ""
     pieces.forEach((piece, i) => {
       full += piece
       if (i < args.length) {
-        full += String(args[i])
+        full += formatArg(args[i])
       }
     })
     executedCommands.push({cmd: full.trim()})
@@ -42,7 +49,7 @@ vi.mock("zx", () => {
         pieces.forEach((piece, i) => {
           full += piece
           if (i < innerArgs.length) {
-            full += String(innerArgs[i])
+            full += formatArg(innerArgs[i])
           }
         })
         executedCommands.push({cmd: full.trim(), env: opts.env})
@@ -88,13 +95,13 @@ describe("down command", () => {
     expect(executedCommands).toHaveLength(3)
 
     expect(executedCommands[0]?.cmd).toBe(
-      `docker compose --file ${file1} down --remove-orphans`,
+      `docker compose --file ${file2} down --remove-orphans`,
     )
     expect(executedCommands[0]?.env?.["SECRET_FOO"]).toBe("bar")
     expect(executedCommands[0]?.env?.["CUSTOM_ENV"]).toBe("hello")
 
     expect(executedCommands[1]?.cmd).toBe(
-      `docker compose --file ${file2} down --remove-orphans`,
+      `docker compose --file ${file1} down --remove-orphans`,
     )
     expect(executedCommands[1]?.env?.["SECRET_FOO"]).toBe("bar")
     expect(executedCommands[1]?.env?.["CUSTOM_ENV"]).toBe("hello")
@@ -123,10 +130,10 @@ describe("down command", () => {
     expect(executedCommands).toHaveLength(2)
 
     expect(executedCommands[0]?.cmd).toBe(
-      `docker compose --file ${file1} down --remove-orphans`,
+      `docker compose --file ${file3} down --remove-orphans`,
     )
     expect(executedCommands[1]?.cmd).toBe(
-      `docker compose --file ${file3} down --remove-orphans`,
+      `docker compose --file ${file1} down --remove-orphans`,
     )
     expect(executedCommands.some((c) => c.cmd.includes("network prune"))).toBe(
       false,
@@ -148,5 +155,84 @@ describe("down command", () => {
         {targets: ["nonexistent"]},
       ),
     ).rejects.toThrow(/No application matches target 'nonexistent'/)
+  })
+
+  it("stops dependents before their dependencies", async () => {
+    const database = await createTestComposeFile(
+      path.join(appsDir, "database.yaml"),
+    )
+    const api = await createTestComposeFile(path.join(appsDir, "api.yaml"), {
+      "x-requires": [database],
+    })
+
+    await down({
+      rootConfDir: "/dummy",
+      secretsFile: "/dummy/secrets.yaml",
+      appsDir,
+      proxies: [],
+      environment: {},
+    })
+
+    const downCommands = executedCommands.filter((c) =>
+      c.cmd.startsWith("docker compose"),
+    )
+    expect(downCommands.map((c) => c.cmd)).toEqual([
+      `docker compose --file ${api} down --remove-orphans`,
+      `docker compose --file ${database} down --remove-orphans`,
+    ])
+  })
+
+  it("doesn't stop dependencies outside the targeted selection", async () => {
+    const database = await createTestComposeFile(
+      path.join(appsDir, "database.yaml"),
+    )
+    const api = await createTestComposeFile(path.join(appsDir, "api.yaml"), {
+      "x-requires": [database],
+    })
+
+    await down(
+      {
+        rootConfDir: "/dummy",
+        secretsFile: "/dummy/secrets.yaml",
+        appsDir,
+        proxies: [],
+        environment: {},
+      },
+      {targets: ["api"]},
+    )
+
+    const downCommands = executedCommands.filter((c) =>
+      c.cmd.startsWith("docker compose"),
+    )
+    expect(downCommands.map((c) => c.cmd)).toEqual([
+      `docker compose --file ${api} down --remove-orphans`,
+    ])
+  })
+
+  it("passes generated overlay files to down commands", async () => {
+    const rootConfDir = "/test/cluster"
+    const database = await createTestComposeFile(
+      path.join(appsDir, "database.yaml"),
+    )
+    const api = await createTestComposeFile(path.join(appsDir, "api.yaml"), {
+      "x-requires": [database],
+    })
+    await generateOverlayFileForComposeFile(rootConfDir, api)
+
+    await down({
+      rootConfDir,
+      secretsFile: path.join(rootConfDir, "secrets.yaml"),
+      appsDir,
+      proxies: [],
+      environment: {},
+    })
+
+    const downCommands = executedCommands.filter((c) =>
+      c.cmd.startsWith("docker compose"),
+    )
+    expect(downCommands.map((c) => c.cmd)).toEqual([
+      `docker compose --file ${api} --file ${getOverlayFilePathForComposeFile(api)} down --remove-orphans`,
+      `docker compose --file ${database} down --remove-orphans`,
+    ])
   })
 })
