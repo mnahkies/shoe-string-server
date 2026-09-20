@@ -1,15 +1,52 @@
 #!/usr/bin/env node
 import {fileURLToPath} from "node:url"
+import {parseArgs} from "node:util"
 import tab from "@bomb.sh/tab/commander"
 import {Command} from "commander"
+import {z} from "zod"
 import packageJson from "../package.json" with {type: "json"}
 import {downCommand} from "./cmd/down.ts"
 import {reconcileCommand} from "./cmd/reconcile.ts"
 import {reloadHaproxyCommand} from "./cmd/reload-haproxy.ts"
 import {loadSecretsCommand} from "./cmd/secrets.ts"
 import {selfUpdateCommand} from "./cmd/self-update.ts"
-import {upCommand} from "./cmd/up.ts"
+import {registerCompletions, upCommand} from "./cmd/up.ts"
+import {resolveConfig} from "./config.ts"
 
+/**
+ * Minimal arg parsing for loading server config
+ */
+export function parseMinimalConfigArgs(args: string[]) {
+  const schema = z.object({
+    dataDir: z.string().optional(),
+    secretsFile: z.string().optional(),
+  })
+
+  const {values} = parseArgs({
+    options: {
+      "data-dir": {
+        type: "string",
+        default: undefined,
+        short: "d",
+      },
+      "secrets-file": {
+        type: "string",
+        default: undefined,
+      },
+    },
+    strict: false,
+    args,
+  })
+
+  return schema.parse({
+    dataDir: values["data-dir"],
+    secretsFile: values["secrets-file"],
+  })
+}
+
+/**
+ * Creates the full CLI program, including all commands and options.
+ */
 export function createProgram(): Command {
   const program = new Command()
     .name("shoe-string")
@@ -73,14 +110,23 @@ export function createProgram(): Command {
     .description("Update shoe-string to the latest version")
     .action((_, cmd) => selfUpdateCommand(cmd.optsWithGlobals()))
 
-  tab(program)
-
   return program
 }
 
 export async function main(args: string[] = process.argv): Promise<void> {
+  const config = await resolveConfig(parseMinimalConfigArgs([...args])).catch(
+    () => {
+      /* we don't want to fail to provide completions if config isn't available */
+      return undefined
+    },
+  )
+
   const program = createProgram()
-  await program.parseAsync(args)
+  const completion = tab(program)
+
+  await registerCompletions(completion.commands.get("up"), config)
+
+  await program.parseAsync([...args])
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

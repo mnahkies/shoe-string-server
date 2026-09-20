@@ -1,3 +1,5 @@
+import path from "node:path"
+import type {Command} from "@bomb.sh/tab"
 import {$} from "zx"
 import {
   buildProcessEnv,
@@ -139,4 +141,34 @@ export async function upCommand(
     build: opts.build,
     debug: opts.debug,
   })
+}
+
+export async function registerCompletions(
+  cmd: Command | undefined,
+  config: ServerConfig | undefined,
+) {
+  if (!cmd) {
+    throw new Error("couldn't find command")
+  }
+
+  const possibleTargets = config
+    ? await resolveAppTargets(config.appsDir, [])
+    : []
+
+  // there's no good way to communicate the lack of options, so just return
+  if (!possibleTargets.length) {
+    return
+  }
+
+  const targetsArgument = cmd.arguments.get("targets")
+
+  if (!targetsArgument) {
+    throw new Error("couldn't find targets argument")
+  }
+
+  targetsArgument.handler = (complete) => {
+    for (const target of possibleTargets) {
+      complete(path.basename(target), "")
+    }
+  }
 }
