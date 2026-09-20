@@ -8,6 +8,7 @@ Read [README.md](README.md) for the CLI's configuration and operational model. T
 * [Checks and tests](#checks-and-tests)
   * [Unit-test conventions](#unit-test-conventions)
   * [E2E prerequisites and side effects](#e2e-prerequisites-and-side-effects)
+  * [Security scanning](#security-scanning)
 * [Code style and generated files](#code-style-and-generated-files)
 * [Opening a pull request](#opening-a-pull-request)
 
@@ -70,6 +71,22 @@ After preparing that environment:
 ```sh
 mise exec -- pnpm test:e2e
 ```
+
+### Security scanning
+
+We use several security tools to help prevent vulnerabilities from being introduced, particularly from a supply-chain pespective:
+
+* [zizmor](https://docs.zizmor.sh/) scans our github actions for misconfigurations
+  * run locally with `mise run zizmor`
+* [trivy](https://trivy.dev/) scans our `pnpm-lock.yaml` for known vulnerabilities in dependencies
+  * run locally with `mise run trivy`
+
+These block installing dependencies and running the build in CI.
+
+We have two additional mise security tasks that aren't yet integrated into CI:
+
+* `mise run trufflehog`
+* `mise run gitleaks`
 
 ## Code style and generated files
 
