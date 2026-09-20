@@ -192,10 +192,12 @@ describe("self-update", () => {
           json: async () => ({version: "0.2.0"}),
         } as Response)
 
-        await selfUpdate({
-          installationDir: "/usr/local/lib/node_modules/shoe-string-server",
-          fetchFn: mockFetch,
-        })
+        await selfUpdate(
+          {
+            installationDir: "/usr/local/lib/node_modules/shoe-string-server",
+          },
+          mockFetch,
+        )
 
         expect(commandCalls).toEqual([])
         expect(consoleSpy).toHaveBeenCalledWith("Current version: 0.0.1")
@@ -216,10 +218,12 @@ describe("self-update", () => {
           json: async () => ({version: "0.0.1"}),
         } as Response)
 
-        await selfUpdate({
-          installationDir: "/usr/local/lib/node_modules/shoe-string-server",
-          fetchFn: mockFetch,
-        })
+        await selfUpdate(
+          {
+            installationDir: "/usr/local/lib/node_modules/shoe-string-server",
+          },
+          mockFetch,
+        )
 
         expect(commandCalls).toEqual([])
         expect(consoleSpy).toHaveBeenCalledWith("Current version: 0.0.1")
@@ -241,10 +245,12 @@ describe("self-update", () => {
           statusText: "Internal Server Error",
         } as Response)
 
-        await selfUpdate({
-          installationDir: "/usr/local/lib/node_modules/shoe-string-server",
-          fetchFn: mockFetch,
-        })
+        await selfUpdate(
+          {
+            installationDir: "/usr/local/lib/node_modules/shoe-string-server",
+          },
+          mockFetch,
+        )
 
         expect(commandCalls).toEqual([])
         expect(
@@ -289,7 +295,7 @@ describe("self-update", () => {
         "mise exec -- pnpm run build": {exitCode: 0},
       }
 
-      await action()
+      await action(undefined)
       expect(commandCalls).toContain("git remote")
     })
   })

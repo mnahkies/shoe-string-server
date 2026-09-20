@@ -1,9 +1,5 @@
 import type {Command} from "@bomb.sh/tab"
-import {
-  type GlobalOptions,
-  resolveConfig,
-  type ServerConfig,
-} from "../config.ts"
+import type {ServerConfig} from "../config.ts"
 import {decryptSecrets, loadSecrets} from "../lib/secrets.ts"
 import type {Cmd} from "./types.ts"
 
@@ -25,25 +21,26 @@ export function formatKeys(secrets: Record<string, string>): string[] {
   return Object.keys(secrets)
 }
 
-export interface LoadSecretsCommandOptions extends GlobalOptions {
+export interface LoadSecretsCommandOptions {
   filter?: string
   list?: boolean
-  decrypt?: (filePath: string) => Promise<string>
 }
 
-export async function action(opts: LoadSecretsCommandOptions): Promise<void> {
-  const config = await resolveConfig({
-    ...opts,
-    secretsFile: opts.secretsFile,
-  })
-
+export async function action(
+  config: ServerConfig,
+  opts: LoadSecretsCommandOptions = {},
+  _globalOpts: unknown = undefined,
+  {
+    decrypt = decryptSecrets,
+  }: {decrypt?: (filePath: string) => Promise<string>} = {},
+): Promise<void> {
   const secrets = await loadSecrets({
     file: config.secretsFile,
-    filter: opts?.filter,
-    decrypt: opts?.decrypt ?? decryptSecrets,
+    filter: opts.filter,
+    decrypt,
   })
 
-  if (opts?.list) {
+  if (opts.list) {
     for (const key of formatKeys(secrets)) {
       console.log(key)
     }
@@ -65,4 +62,4 @@ export async function registerCompletions(
 export const secretsCmd = {
   action,
   registerCompletions,
-} satisfies Cmd
+} satisfies Cmd<LoadSecretsCommandOptions>

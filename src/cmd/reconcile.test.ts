@@ -1,5 +1,6 @@
 import path from "node:path"
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
+import type {GlobalOptions, ServerConfig} from "../config.ts"
 import {resetFsAdaptor, setFsAdaptor} from "../lib/file-system/fs-adaptor.ts"
 import {InMemoryFsAdaptor} from "../lib/file-system/in-memory.fs-adaptor.ts"
 import {reconcile} from "./reconcile.ts"
@@ -84,6 +85,16 @@ describe("reconcile command", () => {
   let fsAdaptor: InMemoryFsAdaptor
   const rootConfDir = "/test/cluster"
 
+  const globalOpts: GlobalOptions = {dataDir: rootConfDir}
+
+  const baseConfig: ServerConfig = {
+    rootConfDir,
+    secretsFile: path.join(rootConfDir, "secrets.encrypted.yaml"),
+    appsDir: path.join(rootConfDir, "applications"),
+    proxies: [],
+    environment: {},
+  }
+
   beforeEach(async () => {
     mockUp.mockClear()
     fetchExitCode = 0
@@ -114,7 +125,7 @@ describe("reconcile command", () => {
     headRev = "abc"
     upstreamRev = "abc"
 
-    const changed = await reconcile({dataDir: rootConfDir})
+    const changed = await reconcile(baseConfig, globalOpts)
 
     expect(changed).toBe(false)
     expect(mockUp).not.toHaveBeenCalled()
@@ -124,7 +135,7 @@ describe("reconcile command", () => {
     headRev = "abc"
     upstreamRev = "def"
 
-    const changed = await reconcile({dataDir: rootConfDir})
+    const changed = await reconcile(baseConfig, globalOpts)
 
     expect(changed).toBe(true)
     expect(mockUp).toHaveBeenCalledTimes(1)
@@ -135,10 +146,29 @@ describe("reconcile command", () => {
     )
   })
 
+  it("preserves explicit secrets-file override when resolving config fresh after pull", async () => {
+    headRev = "abc"
+    upstreamRev = "def"
+    const overrideSecretsFile = "/test/cluster/custom-secrets.yaml"
+    await fsAdaptor.writeFile(overrideSecretsFile, "dummy")
+
+    await reconcile(baseConfig, {
+      dataDir: rootConfDir,
+      secretsFile: overrideSecretsFile,
+    })
+
+    expect(mockUp).toHaveBeenCalledTimes(1)
+    expect(mockUp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        secretsFile: overrideSecretsFile,
+      }),
+    )
+  })
+
   it("throws error when git fetch fails", async () => {
     fetchExitCode = 1
 
-    await expect(reconcile({dataDir: rootConfDir})).rejects.toThrow(
+    await expect(reconcile(baseConfig, globalOpts)).rejects.toThrow(
       /Git fetch failed in \/test\/cluster/,
     )
     expect(mockUp).not.toHaveBeenCalled()
@@ -147,7 +177,7 @@ describe("reconcile command", () => {
   it("throws error when upstream branch is missing", async () => {
     revParseExitCode = 1
 
-    await expect(reconcile({dataDir: rootConfDir})).rejects.toThrow(
+    await expect(reconcile(baseConfig, globalOpts)).rejects.toThrow(
       /Unable to determine git HEAD or upstream tracking branch/,
     )
     expect(mockUp).not.toHaveBeenCalled()
@@ -158,7 +188,7 @@ describe("reconcile command", () => {
     upstreamRev = "def"
     pullExitCode = 1
 
-    await expect(reconcile({dataDir: rootConfDir})).rejects.toThrow(
+    await expect(reconcile(baseConfig, globalOpts)).rejects.toThrow(
       /Git pull failed/,
     )
     expect(mockUp).not.toHaveBeenCalled()

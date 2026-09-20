@@ -1,11 +1,6 @@
 import type {Command} from "@bomb.sh/tab"
 import {$} from "zx"
-import {
-  type GlobalOptions,
-  type ProxyConfig,
-  resolveConfig,
-  type ServerConfig,
-} from "../config.ts"
+import type {ProxyConfig, ServerConfig} from "../config.ts"
 import {discoverProxies} from "../lib/proxy/haproxy-bindings.ts"
 import {generateHaproxyConfig} from "../lib/proxy/haproxy-generate.ts"
 import type {Cmd} from "./types.ts"
@@ -32,8 +27,7 @@ export async function reloadHaproxy(
  * Regenerates proxy configs for every proxy in the cluster config, then reloads
  * each via SIGHUP if its container is running.
  */
-export async function action(opts: GlobalOptions): Promise<void> {
-  const config = await resolveConfig(opts)
+export async function action(config: ServerConfig): Promise<void> {
   const discovered = await discoverProxies(config.appsDir)
 
   for (const proxy of discovered) {

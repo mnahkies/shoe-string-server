@@ -1,7 +1,7 @@
 import type {Command} from "@bomb.sh/tab"
 import semver from "semver"
 import {$} from "zx"
-import type {GlobalOptions, ServerConfig} from "../config.ts"
+import type {ServerConfig} from "../config.ts"
 import {
   detectInstallationType,
   type InstallationTypeGit,
@@ -16,7 +16,6 @@ import type {Cmd} from "./types.ts"
 
 export interface SelfUpdateOptions {
   installationDir?: string
-  fetchFn?: typeof fetch
 }
 
 async function updateGitInstallation({dir}: InstallationTypeGit) {
@@ -93,6 +92,7 @@ async function updatePackageInstallation(
 
 export async function selfUpdate(
   options: SelfUpdateOptions = {},
+  fetchFn: typeof fetch = fetch,
 ): Promise<void> {
   const installInfo = await detectInstallationType(options.installationDir)
   const installType = installInfo.type
@@ -102,7 +102,7 @@ export async function selfUpdate(
       await updateGitInstallation(installInfo)
       break
     case "package":
-      await updatePackageInstallation(installInfo, options.fetchFn)
+      await updatePackageInstallation(installInfo, fetchFn)
       break
     default:
       throw new Error(
@@ -111,8 +111,11 @@ export async function selfUpdate(
   }
 }
 
-export async function action(_opts: GlobalOptions = {}): Promise<void> {
-  await selfUpdate()
+export async function action(
+  _config: ServerConfig | undefined,
+  opts: SelfUpdateOptions = {},
+): Promise<void> {
+  await selfUpdate(opts)
 }
 
 export async function registerCompletions(
@@ -126,4 +129,4 @@ export async function registerCompletions(
 export const selfUpdateCmd = {
   action,
   registerCompletions,
-} satisfies Cmd
+} satisfies Cmd<SelfUpdateOptions>

@@ -131,12 +131,6 @@ describe("reload-haproxy command", () => {
   })
 
   it("throws error when proxy discovered in apps is missing in cluster.yaml", async () => {
-    await fsAdaptor.writeFile(
-      "/test/cluster/cluster.yaml",
-      "appsDir: ./apps\nproxies: []\n",
-    )
-    await fsAdaptor.writeFile("/test/cluster/secrets.encrypted.yaml", "dummy")
-
     await createTestComposeFile(path.join(appsDir, "haproxy.yaml"), {
       services: {
         haproxy: {
@@ -146,7 +140,15 @@ describe("reload-haproxy command", () => {
       },
     })
 
-    await expect(action({dataDir: "/test/cluster"})).rejects.toThrow(
+    await expect(
+      action({
+        rootConfDir: "/test/cluster",
+        secretsFile: "/test/cluster/secrets.encrypted.yaml",
+        appsDir,
+        proxies: [],
+        environment: {},
+      }),
+    ).rejects.toThrow(
       /Proxy unknown_proxy missing configuration in cluster.yaml/,
     )
   })
