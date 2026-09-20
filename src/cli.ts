@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import {fileURLToPath} from "node:url"
-import {Command} from "@commander-js/extra-typings"
+import tab from "@bomb.sh/tab/commander"
+import {Command} from "commander"
 import packageJson from "../package.json" with {type: "json"}
 import {downCommand} from "./cmd/down.ts"
 import {reconcileCommand} from "./cmd/reconcile.ts"
@@ -33,9 +34,7 @@ export function createProgram(): Command {
     )
     .option("--build", "Build images before starting containers.")
     .option("--debug", "Enable debug logging")
-    .action((targets, opts, cmd) =>
-      upCommand({...opts, ...cmd.optsWithGlobals(), targets}),
-    )
+    .action((targets, _, cmd) => upCommand({...cmd.optsWithGlobals(), targets}))
 
   program
     .command("down")
@@ -43,42 +42,38 @@ export function createProgram(): Command {
       "Stop applications and prune unused networks (targeted by default)",
     )
     .argument("[targets...]", "Application(s) to stop; defaults to all")
-    .action((targets, opts, cmd) =>
-      downCommand({...opts, ...cmd.optsWithGlobals(), targets}),
+    .action((targets, _, cmd) =>
+      downCommand({...cmd.optsWithGlobals(), targets}),
     )
 
   program
     .command("reconcile")
     .description("Fetch git updates and reconcile applications")
-    .action((_opts, cmd) => reconcileCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => reconcileCommand(cmd.optsWithGlobals()))
 
   program
     .command("reload-proxy")
     .description("Re-generate proxy configs and send HUP signal")
-    .action((_opts, cmd) => reloadHaproxyCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => reloadHaproxyCommand(cmd.optsWithGlobals()))
 
   program
     .command("secrets")
     .description(
-      `Decrypt and export secrets from secrets.encrypted.yaml as environment variables. Example usage:
-              eval "$(shoe-string secrets --filter 'DOCKER_HUB_USERNAME|DOCKER_HUB_TOKEN')"`,
+      `Decrypt and export secrets from secrets.encrypted.yaml as environment variables.`,
     )
     .option("-l, --list", "List secret keys without printing values")
     .option(
       "-f, --filter <filter>",
       "Filter secret keys (separated by | or comma)",
     )
-    .action((opts, cmd) =>
-      loadSecretsCommand({
-        ...opts,
-        ...cmd.optsWithGlobals(),
-      }),
-    )
+    .action((_, cmd) => loadSecretsCommand(cmd.optsWithGlobals()))
 
   program
     .command("self-update")
     .description("Update shoe-string to the latest version")
-    .action((_opts, cmd) => selfUpdateCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => selfUpdateCommand(cmd.optsWithGlobals()))
+
+  tab(program)
 
   return program
 }

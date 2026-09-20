@@ -1,20 +1,16 @@
+allowBuilds:
+  esbuild: false
+
 blockExoticSubdeps: true
-trustPolicy: no-downgrade
-trustPolicyIgnoreAfter: 10080
 
 dedupeInjectedDeps: true
 
 linkWorkspacePackages: deep
 
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude: []
+
 strictPeerDependencies: true
-minimumReleaseAgeExclude:
-  - jscpd-darwin-arm64@5.2.0
-  - jscpd-darwin-x64@5.2.0
-  - jscpd-linux-arm64-gnu@5.2.0
-  - jscpd-linux-arm64-musl@5.2.0
-  - jscpd-linux-x64-gnu@5.2.0
-  - jscpd-linux-x64-musl@5.2.0
-  - jscpd-windows-arm64-msvc@5.2.0
-  - jscpd-windows-x64-msvc@5.2.0
-  - jscpd@5.2.0
+
+trustPolicy: no-downgrade
+trustPolicyIgnoreAfter: 10080

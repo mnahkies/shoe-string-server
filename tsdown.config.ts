@@ -8,6 +8,6 @@ export default defineConfig({
   clean: true,
   platform: "node",
   deps: {
-    alwaysBundle: ["*", "@commander-js/extra-typings"],
+    alwaysBundle: ["*"],
   },
 })
