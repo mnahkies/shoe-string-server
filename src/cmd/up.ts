@@ -19,6 +19,7 @@ import {discoverProxies} from "../lib/proxy/haproxy-bindings.ts"
 import {generateHaproxyConfig} from "../lib/proxy/haproxy-generate.ts"
 import {loadSecrets} from "../lib/secrets.ts"
 import {reloadHaproxy} from "./reload-haproxy.ts"
+import type {Cmd} from "./types.ts"
 
 export interface UpOptions {
   targets?: string[]
@@ -172,3 +173,8 @@ export async function registerCompletions(
     }
   }
 }
+
+export const upCmd = {
+  action: upCommand,
+  registerCompletions,
+} satisfies Cmd

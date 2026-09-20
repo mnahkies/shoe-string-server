@@ -10,7 +10,7 @@ import {reconcileCommand} from "./cmd/reconcile.ts"
 import {reloadHaproxyCommand} from "./cmd/reload-haproxy.ts"
 import {loadSecretsCommand} from "./cmd/secrets.ts"
 import {selfUpdateCommand} from "./cmd/self-update.ts"
-import {registerCompletions, upCommand} from "./cmd/up.ts"
+import {upCmd} from "./cmd/up.ts"
 import {resolveConfig} from "./config.ts"
 
 /**
@@ -71,7 +71,9 @@ export function createProgram(): Command {
     )
     .option("--build", "Build images before starting containers.")
     .option("--debug", "Enable debug logging")
-    .action((targets, _, cmd) => upCommand({...cmd.optsWithGlobals(), targets}))
+    .action((targets, _, cmd) =>
+      upCmd.action({...cmd.optsWithGlobals(), targets}),
+    )
 
   program
     .command("down")
@@ -124,7 +126,7 @@ export async function main(args: string[] = process.argv): Promise<void> {
   const program = createProgram()
   const completion = tab(program)
 
-  await registerCompletions(completion.commands.get("up"), config)
+  await upCmd.registerCompletions(completion.commands.get("up"), config)
 
   await program.parseAsync([...args])
 }
