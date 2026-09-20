@@ -47,13 +47,13 @@ jobs:
         id: trivy-scan
         continue-on-error: true
         env:
-          TRIVY_OUTPUT: '/code/dist/trivy-results.sarif'
+          TRIVY_OUTPUT: '/code/trivy-results.sarif'
         run: mise run trivy
 
       - name: Upload trivy scan results to GitHub Security
         uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
-          sarif_file: './dist/trivy-results.sarif'
+          sarif_file: './trivy-results.sarif'
 
       - name: Fail if trivy-scan failed
         if: steps.trivy-scan.outcome == 'failure'
