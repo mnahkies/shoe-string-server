@@ -330,7 +330,7 @@ describe("up command", () => {
       c.cmd.startsWith("docker compose"),
     )
     expect(composeCommands).toHaveLength(1)
-    expect(composeCommands[0].cmd).toContain(`-f ${api}`)
+    expect(composeCommands[0]?.cmd).toContain(`-f ${api}`)
   })
 
   it("doesn't warn when an untargeted dependency is already running", async () => {
@@ -358,6 +358,6 @@ describe("up command", () => {
       c.cmd.startsWith("docker compose"),
     )
     expect(composeCommands).toHaveLength(1)
-    expect(composeCommands[0].cmd).toContain(`-f ${api}`)
+    expect(composeCommands[0]?.cmd).toContain(`-f ${api}`)
   })
 })
