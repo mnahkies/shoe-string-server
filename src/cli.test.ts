@@ -1,22 +1,29 @@
 import {describe, expect, it, vi} from "vitest"
-import {createProgram, main} from "./cli.ts"
+import {createProgram, createProgramWithCompletions, main} from "./cli.ts"
 import * as downModule from "./cmd/down.ts"
 import * as reconcileModule from "./cmd/reconcile.ts"
 import * as reloadHaproxyModule from "./cmd/reload-haproxy.ts"
 import * as loadSecretsModule from "./cmd/secrets.ts"
-import * as upModule from "./cmd/up.ts"
+import {upCmd} from "./cmd/up.ts"
+import type {ServerConfig} from "./config.ts"
 
-async function getCompletionOutput(args: string[]): Promise<string> {
+const mockConfig = {
+  rootConfDir: "/dummy",
+  secretsFile: "/dummy/secrets.yaml",
+  appsDir: "/dummy/applications",
+  proxies: [],
+  environment: {},
+}
+
+async function getCompletionOutput(
+  args: string[],
+  config: ServerConfig | undefined,
+): Promise<string> {
   const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined)
 
   try {
-    await createProgram().parseAsync([
-      "node",
-      "cli.ts",
-      "complete",
-      "--",
-      ...args,
-    ])
+    const program = await createProgramWithCompletions(config)
+    await program.parseAsync(["node", "cli.ts", "complete", "--", ...args])
 
     return logSpy.mock.calls.map((args) => args.join(" ")).join("\n")
   } finally {
@@ -43,14 +50,14 @@ describe("CLI Program", () => {
     expect(optionNames).toContain("--secrets-file")
   })
 
-  it("registers shell completion commands", () => {
-    const program = createProgram()
+  it("registers shell completion commands", async () => {
+    const program = await createProgramWithCompletions(undefined)
 
     expect(program.commands.map((cmd) => cmd.name())).toContain("complete")
   })
 
   it("completes top-level commands", async () => {
-    const output = await getCompletionOutput([])
+    const output = await getCompletionOutput([], undefined)
 
     expect(output).toContain(
       "up\tProvision networks, start applications, and reload proxies",
@@ -59,19 +66,19 @@ describe("CLI Program", () => {
       "down\tStop applications and prune unused networks (targeted by default)",
     )
     expect(output).toContain("complete\tGenerate shell completion scripts")
-    expect(await getCompletionOutput(["up"])).toBe(
+    expect(await getCompletionOutput(["up"], mockConfig)).toBe(
       "up\tProvision networks, start applications, and reload proxies\n:4",
     )
   })
 
   it("completes options for the up command", async () => {
-    expect(await getCompletionOutput(["up", "-"])).toBe(
+    expect(await getCompletionOutput(["up", "-"], mockConfig)).toBe(
       "-h\tdisplay help for command\n:4",
     )
-    expect(await getCompletionOutput(["up", "--"])).toContain(
+    expect(await getCompletionOutput(["up", "--"], mockConfig)).toContain(
       "--force-recreate\tForce recreation of containers, even if nothing changed",
     )
-    expect(await getCompletionOutput(["up", "--"])).toContain(
+    expect(await getCompletionOutput(["up", "--"], mockConfig)).toContain(
       "--build\tBuild images before starting containers.",
     )
   })
@@ -93,7 +100,7 @@ describe("CLI Program", () => {
   })
 
   it("parses and propagates options for 'up' command", async () => {
-    const spy = vi.spyOn(upModule, "upCommand").mockResolvedValue(undefined)
+    const spy = vi.spyOn(upCmd, "action").mockResolvedValue(undefined)
     const program = createProgram()
 
     await program.parseAsync([

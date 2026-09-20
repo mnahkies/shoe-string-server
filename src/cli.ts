@@ -11,7 +11,7 @@ import {reloadHaproxyCommand} from "./cmd/reload-haproxy.ts"
 import {loadSecretsCommand} from "./cmd/secrets.ts"
 import {selfUpdateCommand} from "./cmd/self-update.ts"
 import {upCmd} from "./cmd/up.ts"
-import {resolveConfig} from "./config.ts"
+import {resolveConfig, type ServerConfig} from "./config.ts"
 
 /**
  * Minimal arg parsing for loading server config
@@ -115,6 +115,18 @@ export function createProgram(): Command {
   return program
 }
 
+export async function createProgramWithCompletions(
+  config: ServerConfig | undefined,
+) {
+  const program = createProgram()
+  const completion = tab(program)
+
+  await upCmd.registerCompletions(completion.commands.get("up"), config)
+  // todo: downCmd
+
+  return program
+}
+
 export async function main(args: string[] = process.argv): Promise<void> {
   const config = await resolveConfig(parseMinimalConfigArgs([...args])).catch(
     () => {
@@ -122,12 +134,7 @@ export async function main(args: string[] = process.argv): Promise<void> {
       return undefined
     },
   )
-
-  const program = createProgram()
-  const completion = tab(program)
-
-  await upCmd.registerCompletions(completion.commands.get("up"), config)
-
+  const program = await createProgramWithCompletions(config)
   await program.parseAsync([...args])
 }
 
