@@ -7,7 +7,10 @@ import {
   resolveConfig,
   type ServerConfig,
 } from "../config.ts"
-import {resolveAppTargets} from "../lib/compose-files/compose-files.ts"
+import {
+  resolveAppTargets,
+  resolveRunningAppTargets,
+} from "../lib/compose-files/compose-files.ts"
 import {loadSecrets} from "../lib/secrets.ts"
 import type {Cmd} from "./types.ts"
 
@@ -58,7 +61,7 @@ export async function registerCompletions(
   }
 
   const possibleTargets = config
-    ? await resolveAppTargets(config.appsDir, [])
+    ? await resolveRunningAppTargets(config.appsDir, [])
     : []
 
   // there's no good way to communicate the lack of options, so just return

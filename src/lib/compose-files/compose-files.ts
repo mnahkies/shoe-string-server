@@ -8,6 +8,7 @@ import {
   minimalComposeSchema,
 } from "../../types/docker-compose-extensions.ts"
 import {deepFreeze} from "../../util/deepFreeze.ts"
+import {getRunningComposeFiles} from "../docker-cli.ts"
 import {getFsAdaptor} from "../file-system/fs-adaptor.ts"
 
 /**
@@ -210,4 +211,14 @@ export async function resolveAppTargets(
   }
 
   return Array.from(resolved).sort()
+}
+
+export async function resolveRunningAppTargets(
+  appsDir: string,
+  targets: string[],
+): Promise<string[]> {
+  const possibleTargets = await resolveAppTargets(appsDir, targets)
+  const runningTargets = new Set(await getRunningComposeFiles())
+
+  return possibleTargets.filter((it) => runningTargets.has(it))
 }
