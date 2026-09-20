@@ -3,11 +3,13 @@ import type {Command} from "@bomb.sh/tab"
 import {$} from "zx"
 import {buildProcessEnv, type ServerConfig} from "../config.ts"
 import {resolveAppTargets} from "../lib/compose-files/compose-files.ts"
+import {sortByStartOrder} from "../lib/compose-files/dependency-ordering.ts"
 import {
   generateOverlayFileForComposeFile,
   getOverlayFilePathForComposeFile,
 } from "../lib/compose-files/generated-overlay.ts"
 import {ensureDataDirectories} from "../lib/compose-files/volumes.ts"
+import {getRunningComposeFiles} from "../lib/docker-cli.ts"
 import {getFsAdaptor} from "../lib/file-system/fs-adaptor.ts"
 import {createNetworks} from "../lib/networks/create-networks.ts"
 import {discoverProxies} from "../lib/proxy/haproxy-bindings.ts"
@@ -84,12 +86,26 @@ export async function up(
     return
   }
 
-  await createNetworks(files)
+  const {startOrder, missing} = await sortByStartOrder(files)
+
+  if (missing.length > 0) {
+    const running = await getRunningComposeFiles()
+
+    for (const it of missing) {
+      if (!running.includes(it)) {
+        console.warn(
+          `Dependency ${path.basename(it)} not targeted, and isn't already running. It will not be started.`,
+        )
+      }
+    }
+  }
+
+  await createNetworks(startOrder)
 
   // Invariant: generate proxy configs for all proxies before starting any container
   await generateAllProxyConfigs(config)
 
-  for (const file of files) {
+  for (const file of startOrder) {
     await ensureDataDirectories(config.rootConfDir, file)
     await generateOverlayFileForComposeFile(config.rootConfDir, file)
 
@@ -127,7 +143,7 @@ export async function up(
   }
 
   // Invariant: regenerate and HUP only proxies that were started/recreated
-  await reloadAffectedProxies(config, files)
+  await reloadAffectedProxies(config, startOrder)
 }
 
 export async function action(

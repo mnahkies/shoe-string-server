@@ -56,6 +56,7 @@ export interface ExtendedComposeSpecification extends ComposeSpecification {
   "x-podman"?: {
     in_pod?: boolean
   }
+  "x-requires"?: string[]
   services?: {
     [k: string]: ExtendedService
   }
@@ -110,4 +111,5 @@ export const minimalComposeSchema = z.looseObject({
       in_pod: z.boolean().optional(),
     })
     .optional(),
+  "x-requires": z.array(z.string()).default([]),
 })

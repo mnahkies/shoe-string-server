@@ -88,13 +88,13 @@ describe("down command", () => {
     expect(executedCommands).toHaveLength(3)
 
     expect(executedCommands[0]?.cmd).toBe(
-      `docker compose --file ${file1} down --remove-orphans`,
+      `docker compose --file ${file2} down --remove-orphans`,
     )
     expect(executedCommands[0]?.env?.["SECRET_FOO"]).toBe("bar")
     expect(executedCommands[0]?.env?.["CUSTOM_ENV"]).toBe("hello")
 
     expect(executedCommands[1]?.cmd).toBe(
-      `docker compose --file ${file2} down --remove-orphans`,
+      `docker compose --file ${file1} down --remove-orphans`,
     )
     expect(executedCommands[1]?.env?.["SECRET_FOO"]).toBe("bar")
     expect(executedCommands[1]?.env?.["CUSTOM_ENV"]).toBe("hello")
@@ -123,10 +123,10 @@ describe("down command", () => {
     expect(executedCommands).toHaveLength(2)
 
     expect(executedCommands[0]?.cmd).toBe(
-      `docker compose --file ${file1} down --remove-orphans`,
+      `docker compose --file ${file3} down --remove-orphans`,
     )
     expect(executedCommands[1]?.cmd).toBe(
-      `docker compose --file ${file3} down --remove-orphans`,
+      `docker compose --file ${file1} down --remove-orphans`,
     )
     expect(executedCommands.some((c) => c.cmd.includes("network prune"))).toBe(
       false,
@@ -148,5 +148,57 @@ describe("down command", () => {
         {targets: ["nonexistent"]},
       ),
     ).rejects.toThrow(/No application matches target 'nonexistent'/)
+  })
+
+  it("stops dependents before their dependencies", async () => {
+    const database = await createTestComposeFile(
+      path.join(appsDir, "database.yaml"),
+    )
+    const api = await createTestComposeFile(path.join(appsDir, "api.yaml"), {
+      "x-requires": [database],
+    })
+
+    await down({
+      rootConfDir: "/dummy",
+      secretsFile: "/dummy/secrets.yaml",
+      appsDir,
+      proxies: [],
+      environment: {},
+    })
+
+    const downCommands = executedCommands.filter((c) =>
+      c.cmd.startsWith("docker compose"),
+    )
+    expect(downCommands.map((c) => c.cmd)).toEqual([
+      `docker compose --file ${api} down --remove-orphans`,
+      `docker compose --file ${database} down --remove-orphans`,
+    ])
+  })
+
+  it("doesn't stop dependencies outside the targeted selection", async () => {
+    const database = await createTestComposeFile(
+      path.join(appsDir, "database.yaml"),
+    )
+    const api = await createTestComposeFile(path.join(appsDir, "api.yaml"), {
+      "x-requires": [database],
+    })
+
+    await down(
+      {
+        rootConfDir: "/dummy",
+        secretsFile: "/dummy/secrets.yaml",
+        appsDir,
+        proxies: [],
+        environment: {},
+      },
+      {targets: ["api"]},
+    )
+
+    const downCommands = executedCommands.filter((c) =>
+      c.cmd.startsWith("docker compose"),
+    )
+    expect(downCommands.map((c) => c.cmd)).toEqual([
+      `docker compose --file ${api} down --remove-orphans`,
+    ])
   })
 })

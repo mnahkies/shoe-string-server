@@ -6,6 +6,7 @@ import {
   resolveAppTargets,
   resolveRunningAppTargets,
 } from "../lib/compose-files/compose-files.ts"
+import {sortByStopOrder} from "../lib/compose-files/dependency-ordering.ts"
 import {loadSecrets} from "../lib/secrets.ts"
 import type {Cmd} from "./types.ts"
 
@@ -29,7 +30,18 @@ export async function down(
   })
   const envWithSecrets = buildProcessEnv(config, secrets)
 
-  for (const file of files) {
+  if (files.length === 0) {
+    console.log("No applications to stop")
+    return
+  }
+
+  const {stopOrder} = await sortByStopOrder(files)
+
+  // todo: figure out if we're stopping something that has dependencies
+  //      eg: stopping postgres should stop all that depend on it
+  //          but stopping some-api shouldn't stop postgres
+
+  for (const file of stopOrder) {
     console.log(`Stopping application (${file})`)
 
     await $({
