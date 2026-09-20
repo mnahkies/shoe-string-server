@@ -1,0 +1,57 @@
+name: Publish NPM
+on:
+  push:
+    tags:
+      - v*
+
+permissions:
+  contents: read
+
+jobs:
+  publish_npm:
+    name: publish_npm
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write # required to publish using trusted publishing
+
+    environment: prod
+
+    concurrency:
+      group: publish-npm
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          minimum_release_age: 7d
+          cache: true
+
+      - name: Validate tag matches package.json versions
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
+        run: |
+          node scripts/validate-package-version.mts "${TAG_VERSION}"
+
+      - run: pnpm ci
+
+      - run: pnpm run build
+
+      - name: Publish packages
+        env:
+          TAG_VERSION: ${{ github.ref_name }}
+        run: |
+
+          if [[ $TAG_VERSION == *"alpha"* ]]; then
+            NPM_DIST_TAG=alpha
+          else
+            NPM_DIST_TAG=latest
+          fi
+
+          pnpm stage publish -r --tag $NPM_DIST_TAG
