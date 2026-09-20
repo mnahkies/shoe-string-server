@@ -1,5 +1,11 @@
-import {type GlobalOptions, resolveConfig} from "../config.ts"
+import type {Command} from "@bomb.sh/tab"
+import {
+  type GlobalOptions,
+  resolveConfig,
+  type ServerConfig,
+} from "../config.ts"
 import {decryptSecrets, loadSecrets} from "../lib/secrets.ts"
+import type {Cmd} from "./types.ts"
 
 export function escapeShellValue(val: string): string {
   return `'${val.replace(/'/g, `'\\''`)}'`
@@ -25,9 +31,7 @@ export interface LoadSecretsCommandOptions extends GlobalOptions {
   decrypt?: (filePath: string) => Promise<string>
 }
 
-export async function loadSecretsCommand(
-  opts: LoadSecretsCommandOptions,
-): Promise<void> {
+export async function action(opts: LoadSecretsCommandOptions): Promise<void> {
   const config = await resolveConfig({
     ...opts,
     secretsFile: opts.secretsFile,
@@ -49,3 +53,16 @@ export async function loadSecretsCommand(
     }
   }
 }
+
+export async function registerCompletions(
+  _cmd: Command | undefined,
+  _config: ServerConfig | undefined,
+) {
+  // none yet
+  return
+}
+
+export const secretsCmd = {
+  action,
+  registerCompletions,
+} satisfies Cmd

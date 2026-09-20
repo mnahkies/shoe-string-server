@@ -2,12 +2,7 @@ import {afterEach, beforeEach, describe, expect, it} from "vitest"
 import {createProgram} from "../cli.ts"
 import {resetFsAdaptor, setFsAdaptor} from "../lib/file-system/fs-adaptor.ts"
 import {InMemoryFsAdaptor} from "../lib/file-system/in-memory.fs-adaptor.ts"
-import {
-  escapeShellValue,
-  formatExports,
-  formatKeys,
-  loadSecretsCommand,
-} from "./secrets.ts"
+import {action, escapeShellValue, formatExports, formatKeys} from "./secrets.ts"
 
 describe("load-secrets command", () => {
   let fsAdaptor: InMemoryFsAdaptor
@@ -91,7 +86,7 @@ describe("load-secrets command", () => {
       console.log = (msg: string) => logs.push(msg)
 
       try {
-        await loadSecretsCommand({
+        await action({
           dataDir: "/test/cluster",
           decrypt: async () => "key: value\nother: secret",
         })
@@ -111,7 +106,7 @@ describe("load-secrets command", () => {
       console.log = (msg: string) => logs.push(msg)
 
       try {
-        await loadSecretsCommand({
+        await action({
           dataDir: "/test/cluster",
           list: true,
           decrypt: async () => "key: value\nother: secret",
@@ -132,7 +127,7 @@ describe("load-secrets command", () => {
       console.log = (msg: string) => logs.push(msg)
 
       try {
-        await loadSecretsCommand({
+        await action({
           dataDir: "/test/cluster",
           filter: "KEY",
           decrypt: async () => "key: value\nother: secret",
@@ -153,7 +148,7 @@ describe("load-secrets command", () => {
       console.log = (msg: string) => logs.push(msg)
 
       try {
-        await loadSecretsCommand({
+        await action({
           dataDir: "/test/cluster",
           secretsFile: "custom-secrets.yaml",
           decrypt: async (filePath) => {
@@ -173,7 +168,7 @@ describe("load-secrets command", () => {
       await fsAdaptor.mkdir("/test/empty/applications", {recursive: true})
 
       await expect(
-        loadSecretsCommand({
+        action({
           dataDir: "/test/empty",
           decrypt: async () => "",
         }),

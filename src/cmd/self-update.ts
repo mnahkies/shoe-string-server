@@ -1,6 +1,7 @@
+import type {Command} from "@bomb.sh/tab"
 import semver from "semver"
 import {$} from "zx"
-import type {GlobalOptions} from "../config.ts"
+import type {GlobalOptions, ServerConfig} from "../config.ts"
 import {
   detectInstallationType,
   type InstallationTypeGit,
@@ -11,6 +12,7 @@ import {
   getUpgradeInstructions,
 } from "../lib/self-update/registry-version.ts"
 import {withCwd} from "../util/cwd.ts"
+import type {Cmd} from "./types.ts"
 
 export interface SelfUpdateOptions {
   installationDir?: string
@@ -109,8 +111,19 @@ export async function selfUpdate(
   }
 }
 
-export async function selfUpdateCommand(
-  _opts: GlobalOptions = {},
-): Promise<void> {
+export async function action(_opts: GlobalOptions = {}): Promise<void> {
   await selfUpdate()
 }
+
+export async function registerCompletions(
+  _cmd: Command | undefined,
+  _config: ServerConfig | undefined,
+) {
+  // none yet
+  return
+}
+
+export const selfUpdateCmd = {
+  action,
+  registerCompletions,
+} satisfies Cmd

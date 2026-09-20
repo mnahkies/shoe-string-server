@@ -1,15 +1,47 @@
 #!/usr/bin/env node
 import {fileURLToPath} from "node:url"
+import {parseArgs} from "node:util"
 import tab from "@bomb.sh/tab/commander"
 import {Command} from "commander"
+import {z} from "zod"
 import packageJson from "../package.json" with {type: "json"}
-import {downCommand} from "./cmd/down.ts"
-import {reconcileCommand} from "./cmd/reconcile.ts"
-import {reloadHaproxyCommand} from "./cmd/reload-haproxy.ts"
-import {loadSecretsCommand} from "./cmd/secrets.ts"
-import {selfUpdateCommand} from "./cmd/self-update.ts"
-import {upCommand} from "./cmd/up.ts"
+import {cmds} from "./cmd/index.ts"
+import {resolveConfig, type ServerConfig} from "./config.ts"
 
+/**
+ * Minimal arg parsing for loading server config
+ */
+export function parseMinimalConfigArgs(args: string[]) {
+  const schema = z.object({
+    dataDir: z.string().optional(),
+    secretsFile: z.string().optional(),
+  })
+
+  const {values} = parseArgs({
+    options: {
+      "data-dir": {
+        type: "string",
+        default: undefined,
+        short: "d",
+      },
+      "secrets-file": {
+        type: "string",
+        default: undefined,
+      },
+    },
+    strict: false,
+    args,
+  })
+
+  return schema.parse({
+    dataDir: values["data-dir"],
+    secretsFile: values["secrets-file"],
+  })
+}
+
+/**
+ * Creates the full CLI program, including all commands and options.
+ */
 export function createProgram(): Command {
   const program = new Command()
     .name("shoe-string")
@@ -34,7 +66,9 @@ export function createProgram(): Command {
     )
     .option("--build", "Build images before starting containers.")
     .option("--debug", "Enable debug logging")
-    .action((targets, _, cmd) => upCommand({...cmd.optsWithGlobals(), targets}))
+    .action((targets, _, cmd) =>
+      cmds.up.action({...cmd.optsWithGlobals(), targets}),
+    )
 
   program
     .command("down")
@@ -43,18 +77,18 @@ export function createProgram(): Command {
     )
     .argument("[targets...]", "Application(s) to stop; defaults to all")
     .action((targets, _, cmd) =>
-      downCommand({...cmd.optsWithGlobals(), targets}),
+      cmds.down.action({...cmd.optsWithGlobals(), targets}),
     )
 
   program
     .command("reconcile")
     .description("Fetch git updates and reconcile applications")
-    .action((_, cmd) => reconcileCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => cmds.reconcile.action(cmd.optsWithGlobals()))
 
   program
     .command("reload-proxy")
     .description("Re-generate proxy configs and send HUP signal")
-    .action((_, cmd) => reloadHaproxyCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => cmds.reloadProxy.action(cmd.optsWithGlobals()))
 
   program
     .command("secrets")
@@ -66,21 +100,38 @@ export function createProgram(): Command {
       "-f, --filter <filter>",
       "Filter secret keys (separated by | or comma)",
     )
-    .action((_, cmd) => loadSecretsCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => cmds.secrets.action(cmd.optsWithGlobals()))
 
   program
     .command("self-update")
     .description("Update shoe-string to the latest version")
-    .action((_, cmd) => selfUpdateCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => cmds.selfUpdate.action(cmd.optsWithGlobals()))
 
-  tab(program)
+  return program
+}
+
+export async function createProgramWithCompletions(
+  config: ServerConfig | undefined,
+) {
+  const program = createProgram()
+  const completion = tab(program)
+
+  for (const [name, cmd] of Object.entries(cmds)) {
+    await cmd.registerCompletions?.(completion.commands.get(name), config)
+  }
 
   return program
 }
 
 export async function main(args: string[] = process.argv): Promise<void> {
-  const program = createProgram()
-  await program.parseAsync(args)
+  const config = await resolveConfig(parseMinimalConfigArgs([...args])).catch(
+    () => {
+      /* we don't want to fail to provide completions if config isn't available */
+      return undefined
+    },
+  )
+  const program = await createProgramWithCompletions(config)
+  await program.parseAsync([...args])
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -3,7 +3,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {resetFsAdaptor, setFsAdaptor} from "../lib/file-system/fs-adaptor.ts"
 import {InMemoryFsAdaptor} from "../lib/file-system/in-memory.fs-adaptor.ts"
 import {createTestComposeFile} from "../testing/compose-fixture.ts"
-import {reloadHaproxy, reloadHaproxyCommand} from "./reload-haproxy.ts"
+import {action, reloadHaproxy} from "./reload-haproxy.ts"
 
 interface ExecutedCommand {
   cmd: string
@@ -146,9 +146,7 @@ describe("reload-haproxy command", () => {
       },
     })
 
-    await expect(
-      reloadHaproxyCommand({dataDir: "/test/cluster"}),
-    ).rejects.toThrow(
+    await expect(action({dataDir: "/test/cluster"})).rejects.toThrow(
       /Proxy unknown_proxy missing configuration in cluster.yaml/,
     )
   })

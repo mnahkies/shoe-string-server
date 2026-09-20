@@ -1,7 +1,13 @@
 import path from "node:path"
+import type {Command} from "@bomb.sh/tab"
 import {$} from "zx"
-import {type GlobalOptions, resolveConfig} from "../config.ts"
+import {
+  type GlobalOptions,
+  resolveConfig,
+  type ServerConfig,
+} from "../config.ts"
 import {withCwd} from "../util/cwd.ts"
+import type {Cmd} from "./types.ts"
 import {up} from "./up.ts"
 
 export async function reconcile(opts: GlobalOptions = {}): Promise<boolean> {
@@ -58,6 +64,19 @@ export async function reconcile(opts: GlobalOptions = {}): Promise<boolean> {
   return hasChanges
 }
 
-export async function reconcileCommand(opts: GlobalOptions): Promise<void> {
+export async function action(opts: GlobalOptions): Promise<void> {
   await reconcile(opts)
 }
+
+export async function registerCompletions(
+  _cmd: Command | undefined,
+  _config: ServerConfig | undefined,
+) {
+  // todo
+  return
+}
+
+export const reconcileCmd = {
+  action,
+  registerCompletions,
+} satisfies Cmd
