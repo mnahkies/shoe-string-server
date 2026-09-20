@@ -1,7 +1,7 @@
 import {glob} from "node:fs/promises"
 import path from "node:path"
 
-async function main(expectedVersion:string) {
+async function main(expectedVersion: string) {
   // biome-ignore lint/style/noParameterAssign: ignore
   expectedVersion = expectedVersion.startsWith("v")
     ? expectedVersion.split("v")[1]
