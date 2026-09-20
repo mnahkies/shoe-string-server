@@ -4,8 +4,8 @@ import {z} from "zod"
 import {getFsAdaptor} from "./lib/file-system/fs-adaptor.ts"
 
 export type GlobalOptions = {
-  dataDir?: string
-  secretsFile?: string
+  dataDir: string | undefined
+  secretsFile: string | undefined
 }
 
 export interface ProxyConfig {
@@ -65,14 +65,22 @@ function resolvePath(rootConfDir: string, filename: string): string {
   return path.isAbsolute(filename) ? filename : path.join(rootConfDir, filename)
 }
 
+/**
+ * Resolves the configuration root directory from global options,
+ * with precedence: --data-dir, DATA_BASE_PATH, cwd.
+ */
+export function resolveRootConfDir(opts: GlobalOptions): string {
+  return path.resolve(
+    opts.dataDir || process.env["DATA_BASE_PATH"] || process.cwd(),
+  )
+}
+
 export async function resolveConfig(
   opts: GlobalOptions,
 ): Promise<ServerConfig> {
   const fs = getFsAdaptor()
 
-  const rootConfDir = path.resolve(
-    opts.dataDir || process.env.DATA_BASE_PATH || process.cwd(),
-  )
+  const rootConfDir = resolveRootConfDir(opts)
 
   const config = await loadClusterConfigFile(rootConfDir)
   const secretsFile = resolvePath(

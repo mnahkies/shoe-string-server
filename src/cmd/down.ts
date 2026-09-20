@@ -23,7 +23,10 @@ export async function down(
 ): Promise<void> {
   const files = await resolveAppTargets(config.appsDir, options.targets ?? [])
 
-  const secrets = await loadSecrets({file: config.secretsFile})
+  const secrets = await loadSecrets({
+    file: config.secretsFile,
+    filter: undefined,
+  })
   const envWithSecrets = buildProcessEnv(config, secrets)
 
   for (const file of files) {

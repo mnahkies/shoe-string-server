@@ -88,7 +88,7 @@ export function filterSecrets(
 
 export interface LoadSecretsOptions {
   file: string
-  filter?: string | string[]
+  filter: string | string[] | undefined
   decrypt?: (filePath: string) => Promise<string>
 }
 

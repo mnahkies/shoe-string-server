@@ -8,7 +8,7 @@ import {up} from "./up.ts"
 
 interface ExecutedCommand {
   cmd: string
-  env?: Record<string, string | undefined>
+  env: Record<string, string | undefined> | undefined
 }
 
 const executedCommands: ExecutedCommand[] = []
@@ -25,7 +25,7 @@ vi.mock("zx", () => {
         full += formatArg(args[i])
       }
     })
-    executedCommands.push({cmd: full.trim()})
+    executedCommands.push({cmd: full.trim(), env: undefined})
     return {
       verbose: () => Promise.resolve({stdout: "", stderr: "", exitCode: 0}),
       quiet: () => ({
@@ -178,9 +178,9 @@ describe("up command", () => {
     )
     expect(composeCommands).toHaveLength(2)
 
-    expect(composeCommands[0].cmd).toContain(`-f ${appFile}`)
-    expect(composeCommands[0].cmd).toContain("up -d --remove-orphans")
-    expect(composeCommands[1].cmd).toContain(`-f ${proxyFile}`)
+    expect(composeCommands[0]?.cmd).toContain(`-f ${appFile}`)
+    expect(composeCommands[0]?.cmd).toContain("up -d --remove-orphans")
+    expect(composeCommands[1]?.cmd).toContain(`-f ${proxyFile}`)
 
     // Verify proxy was reloaded with HUP because proxy stack was started
     const hupCommands = executedCommands.filter((c) =>
@@ -223,7 +223,7 @@ describe("up command", () => {
       c.cmd.startsWith("docker compose"),
     )
     expect(composeCommands).toHaveLength(1)
-    expect(composeCommands[0].cmd).toContain(`-f ${appFile}`)
+    expect(composeCommands[0]?.cmd).toContain(`-f ${appFile}`)
 
     // No HUP command should be sent because haproxy.yaml was not started
     const hupCommands = executedCommands.filter((c) =>
@@ -251,31 +251,25 @@ describe("up command", () => {
   })
 
   it("respects environment precedence in up command", async () => {
-    process.env.AMBIENT_VAR = "ambient_val"
-    process.env.CUSTOM_VAR = "ambient_custom"
-    process.env.SECRET_FOO = "ambient_secret"
+    vi.stubEnv("AMBIENT_VAR", "ambient_val")
+    vi.stubEnv("CUSTOM_VAR", "ambient_custom")
+    vi.stubEnv("SECRET_FOO", "ambient_secret")
 
-    try {
-      await createTestComposeFile(path.join(appsDir, "app.yaml"), {
-        services: {
-          web: {
-            hostname: "web",
-          },
+    await createTestComposeFile(path.join(appsDir, "app.yaml"), {
+      services: {
+        web: {
+          hostname: "web",
         },
-      })
+      },
+    })
 
-      await up(baseConfig)
+    await up(baseConfig)
 
-      const composeCommand = executedCommands.find((c) =>
-        c.cmd.startsWith("docker compose"),
-      )
-      expect(composeCommand?.env?.AMBIENT_VAR).toBe("ambient_val")
-      expect(composeCommand?.env?.CUSTOM_VAR).toBe("ambient_custom")
-      expect(composeCommand?.env?.SECRET_FOO).toBe("ambient_secret")
-    } finally {
-      delete process.env.AMBIENT_VAR
-      delete process.env.CUSTOM_VAR
-      delete process.env.SECRET_FOO
-    }
+    const composeCommand = executedCommands.find((c) =>
+      c.cmd.startsWith("docker compose"),
+    )
+    expect(composeCommand?.env?.["AMBIENT_VAR"]).toBe("ambient_val")
+    expect(composeCommand?.env?.["CUSTOM_VAR"]).toBe("ambient_custom")
+    expect(composeCommand?.env?.["SECRET_FOO"]).toBe("ambient_secret")
   })
 })

@@ -185,14 +185,12 @@ export async function getHaproxyBindings(
       }
       hostnamesForThisProxy.set(routeKey, {serviceName, file})
 
-      const existing = proxyBinding.httpBindings[name]
-      if (!existing) {
-        proxyBinding.httpBindings[name] = {
-          hostnames: [],
-          externalPort: binding["proxy-port"],
-          containerPort: binding["container-port"],
-        }
+      proxyBinding.httpBindings[name] ??= {
+        hostnames: [],
+        externalPort: binding["proxy-port"],
+        containerPort: binding["container-port"],
       }
+
       proxyBinding.httpBindings[name].hostnames.push({
         name: binding.name,
         auth: binding.auth,

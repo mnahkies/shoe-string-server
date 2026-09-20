@@ -40,16 +40,16 @@ proxies:
       recursive: true,
     })
 
-    const config = await resolveConfig({dataDir})
+    const config = await resolveConfig({dataDir, secretsFile: undefined})
 
     expect(config.rootConfDir).toBe(dataDir)
     expect(config.secretsFile).toBe(secretsFile)
     expect(config.appsDir).toBe("/test/cluster/applications")
     expect(config.proxies.map((it) => it.name)).toEqual(["internal", "public"])
     const [internal] = config.proxies
-    expect(internal.containerName).toBe("haproxy-internal")
-    expect(internal.conf).toBe("/test/cluster/conf/haproxy/internal")
-    expect(config.proxies[1].conf).toBe("/test/cluster/conf/haproxy/public")
+    expect(internal?.containerName).toBe("haproxy-internal")
+    expect(internal?.conf).toBe("/test/cluster/conf/haproxy/internal")
+    expect(config.proxies[1]?.conf).toBe("/test/cluster/conf/haproxy/public")
   })
 
   it("resolves custom secretsFile location", async () => {
@@ -71,7 +71,9 @@ proxies:
   it("throws error when cluster.yaml does not exist", async () => {
     const dataDir = "/test/nonexistent"
 
-    await expect(resolveConfig({dataDir})).rejects.toThrow(
+    await expect(
+      resolveConfig({dataDir, secretsFile: undefined}),
+    ).rejects.toThrow(
       `cluster.yaml not found in ${path.resolve(dataDir, "cluster.yaml")}`,
     )
   })
@@ -81,7 +83,9 @@ proxies:
     await fsAdaptor.writeFile("/test/cluster/cluster.yaml", "{}\n")
     await fsAdaptor.mkdir("/test/cluster/applications")
 
-    await expect(resolveConfig({dataDir})).rejects.toThrow(
+    await expect(
+      resolveConfig({dataDir, secretsFile: undefined}),
+    ).rejects.toThrow(
       `secretsFile must exist, got: ${path.resolve(dataDir, "secrets.encrypted.yaml")}`,
     )
   })
@@ -109,7 +113,9 @@ proxies:
       "dummy",
     )
 
-    await expect(resolveConfig({dataDir})).rejects.toThrow(
+    await expect(
+      resolveConfig({dataDir, secretsFile: undefined}),
+    ).rejects.toThrow(
       `appsDir must exist, got: ${path.resolve(dataDir, "applications")}`,
     )
   })
@@ -131,7 +137,9 @@ proxies:
     )
     await fsAdaptor.mkdir("/test/cluster/applications")
 
-    await expect(resolveConfig({dataDir})).rejects.toThrow(
+    await expect(
+      resolveConfig({dataDir, secretsFile: undefined}),
+    ).rejects.toThrow(
       `proxy.conf must exist, got: ${path.resolve(dataDir, "conf/haproxy")}`,
     )
   })
@@ -147,6 +155,8 @@ proxies:
       "appDir: applications\n",
     )
 
-    await expect(resolveConfig({dataDir})).rejects.toThrow(/Unrecognized key/)
+    await expect(
+      resolveConfig({dataDir, secretsFile: undefined}),
+    ).rejects.toThrow(/Unrecognized key/)
   })
 })

@@ -64,9 +64,9 @@ describe("compose-fixture", () => {
           },
         },
       })
-      expect(spec.services?.custom?.image).toBe("custom:1.0")
-      expect(spec.services?.custom?.hostname).toBe("custom-host")
-      expect(spec.services?.app).toBeUndefined()
+      expect(spec.services?.["custom"]?.image).toBe("custom:1.0")
+      expect(spec.services?.["custom"]?.hostname).toBe("custom-host")
+      expect(spec.services?.["app"]).toBeUndefined()
     })
   })
 
@@ -101,8 +101,8 @@ describe("compose-fixture", () => {
 
       const content = await fsAdaptor.readFile(filePath)
       const parsed = load(content) as ExtendedComposeSpecification
-      expect(parsed.networks?.postgres).toBeDefined()
-      expect(parsed.services?.app?.image).toBe("test:latest")
+      expect(parsed.networks?.["postgres"]).toBeDefined()
+      expect(parsed.services?.["app"]?.image).toBe("test:latest")
     })
   })
 })

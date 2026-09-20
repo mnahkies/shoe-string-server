@@ -6,10 +6,10 @@ import {selfUpdateCmd} from "./self-update.ts"
 import {upCmd} from "./up.ts"
 
 export const cmds = {
-  up: upCmd,
   down: downCmd,
   reconcile: reconcileCmd,
   reloadProxy: reloadHaproxyCmd,
   secrets: secretsCmd,
   selfUpdate: selfUpdateCmd,
+  up: upCmd,
 }

@@ -39,6 +39,12 @@ importers:
       '@commander-js/extra-typings':
         specifier: ^15.0.0
         version: 15.0.0(commander@15.0.0)
+      '@tsconfig/node26':
+        specifier: ^26.0.1
+        version: 26.0.1
+      '@tsconfig/strictest':
+        specifier: ^2.0.8
+        version: 2.0.8
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
@@ -428,6 +434,12 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
+
+  '@tsconfig/node26@26.0.1':
+    resolution: {integrity: sha512-NQT8JUFDKeAIWpR1dakeF534msQAsoSLr1WpKdRDt3sCvk2fsFK3EVKUBG5xKYVamiRO6yTfniiyvCaqOGgn/g==}
+
+  '@tsconfig/strictest@2.0.8':
+    resolution: {integrity: sha512-XnQ7vNz5HRN0r88GYf1J9JJjqtZPiHt2woGJOo2dYqyHGGcd6OLGqSlBB6p1j9mpzja6Oe5BoPqWmeDx6X9rLw==}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -1601,6 +1613,10 @@ snapshots:
   '@rolldown/pluginutils@1.0.1': {}
 
   '@standard-schema/spec@1.1.0': {}
+
+  '@tsconfig/node26@26.0.1': {}
+
+  '@tsconfig/strictest@2.0.8': {}
 
   '@types/chai@5.2.3':
     dependencies:

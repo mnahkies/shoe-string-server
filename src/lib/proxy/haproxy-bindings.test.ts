@@ -216,7 +216,7 @@ describe("getHaproxyBindings", () => {
 
     const {bindings} = await getHaproxyBindings(dir)
 
-    expect(bindings[0].httpBindings["web-80"].hostnames).toEqual([
+    expect(bindings[0]?.httpBindings["web-80"]?.hostnames).toEqual([
       {name: "example.com", auth: false, wss: false, proxyName: "public"},
       {
         name: "web.internal.example.com",
@@ -247,7 +247,7 @@ describe("getHaproxyBindings", () => {
 
     const {bindings} = await getHaproxyBindings(dir)
 
-    expect(bindings[0].httpBindings["chat-8080"].hostnames).toEqual([
+    expect(bindings[0]?.httpBindings["chat-8080"]?.hostnames).toEqual([
       {
         name: "chat.server.internal.example.com",
         auth: true,
@@ -280,7 +280,7 @@ describe("getHaproxyBindings", () => {
 
     const {bindings} = await getHaproxyBindings(dir)
 
-    expect(Object.keys(bindings[0].httpBindings).sort()).toEqual([
+    expect(Object.keys(bindings[0]?.httpBindings ?? {}).sort()).toEqual([
       "garage-3900",
       "garage-3901",
     ])
@@ -362,7 +362,7 @@ describe("getHaproxyBindings", () => {
 
     const {bindings} = await getHaproxyBindings(dir)
 
-    expect(bindings[0].tcpBindings).toEqual({
+    expect(bindings[0]?.tcpBindings).toEqual({
       "postgres-5432": {
         externalPort: 5432,
         containerPort: 5432,
