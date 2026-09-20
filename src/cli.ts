@@ -6,10 +6,6 @@ import {Command} from "commander"
 import {z} from "zod"
 import packageJson from "../package.json" with {type: "json"}
 import {cmds} from "./cmd/index.ts"
-import {reloadHaproxyCommand} from "./cmd/reload-haproxy.ts"
-import {loadSecretsCommand} from "./cmd/secrets.ts"
-import {selfUpdateCommand} from "./cmd/self-update.ts"
-
 import {resolveConfig, type ServerConfig} from "./config.ts"
 
 /**
@@ -92,7 +88,7 @@ export function createProgram(): Command {
   program
     .command("reload-proxy")
     .description("Re-generate proxy configs and send HUP signal")
-    .action((_, cmd) => reloadHaproxyCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => cmds.reloadProxy.action(cmd.optsWithGlobals()))
 
   program
     .command("secrets")
@@ -104,12 +100,12 @@ export function createProgram(): Command {
       "-f, --filter <filter>",
       "Filter secret keys (separated by | or comma)",
     )
-    .action((_, cmd) => loadSecretsCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => cmds.secrets.action(cmd.optsWithGlobals()))
 
   program
     .command("self-update")
     .description("Update shoe-string to the latest version")
-    .action((_, cmd) => selfUpdateCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => cmds.selfUpdate.action(cmd.optsWithGlobals()))
 
   return program
 }
@@ -120,12 +116,9 @@ export async function createProgramWithCompletions(
   const program = createProgram()
   const completion = tab(program)
 
-  await cmds.up.registerCompletions(completion.commands.get("up"), config)
-  await cmds.down.registerCompletions(completion.commands.get("down"), config)
-  await cmds.reconcile.registerCompletions(
-    completion.commands.get("down"),
-    config,
-  )
+  for (const [name, cmd] of Object.entries(cmds)) {
+    await cmd.registerCompletions?.(completion.commands.get(name), config)
+  }
 
   return program
 }

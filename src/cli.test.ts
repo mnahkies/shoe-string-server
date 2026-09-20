@@ -1,8 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {createProgram, createProgramWithCompletions, main} from "./cli.ts"
 import {cmds} from "./cmd/index.ts"
-import * as reloadHaproxyModule from "./cmd/reload-haproxy.ts"
-import * as loadSecretsModule from "./cmd/secrets.ts"
 import type {ServerConfig} from "./config.ts"
 import {getRunningComposeFiles} from "./lib/docker-cli.ts"
 import {resetFsAdaptor, setFsAdaptor} from "./lib/file-system/fs-adaptor.ts"
@@ -46,6 +44,7 @@ describe("CLI Program", () => {
     expect(commandNames).toContain("reconcile")
     expect(commandNames).toContain("reload-proxy")
     expect(commandNames).toContain("secrets")
+    expect(commandNames).toContain("self-update")
   })
 
   it("configures global options", () => {
@@ -98,6 +97,48 @@ describe("CLI Program", () => {
     expect(await getCompletionOutput(["down", "--"], mockConfig)).toContain(
       "--help\tdisplay help for command",
     )
+  })
+
+  it("completes options for the secrets command", async () => {
+    expect(await getCompletionOutput(["secrets", "-"], mockConfig)).toContain(
+      "-l\tList secret keys without printing values",
+    )
+    expect(await getCompletionOutput(["secrets", "-"], mockConfig)).toContain(
+      "-f\tFilter secret keys (separated by | or comma)",
+    )
+    expect(await getCompletionOutput(["secrets", "--"], mockConfig)).toContain(
+      "--list\tList secret keys without printing values",
+    )
+    expect(await getCompletionOutput(["secrets", "--"], mockConfig)).toContain(
+      "--filter\tFilter secret keys (separated by | or comma)",
+    )
+  })
+
+  it("completes options for the reconcile command", async () => {
+    expect(await getCompletionOutput(["reconcile", "-"], mockConfig)).toBe(
+      "-h\tdisplay help for command\n:4",
+    )
+    expect(
+      await getCompletionOutput(["reconcile", "--"], mockConfig),
+    ).toContain("--help\tdisplay help for command")
+  })
+
+  it("completes options for the reload-proxy command", async () => {
+    expect(await getCompletionOutput(["reload-proxy", "-"], mockConfig)).toBe(
+      "-h\tdisplay help for command\n:4",
+    )
+    expect(
+      await getCompletionOutput(["reload-proxy", "--"], mockConfig),
+    ).toContain("--help\tdisplay help for command")
+  })
+
+  it("completes options for the self-update command", async () => {
+    expect(await getCompletionOutput(["self-update", "-"], mockConfig)).toBe(
+      "-h\tdisplay help for command\n:4",
+    )
+    expect(
+      await getCompletionOutput(["self-update", "--"], mockConfig),
+    ).toContain("--help\tdisplay help for command")
   })
 
   describe("dynamic completions", () => {
@@ -190,14 +231,14 @@ describe("CLI Program", () => {
         cmds.up.registerCompletions?.(undefined, mockConfig),
       ).rejects.toThrow("couldn't find command")
       await expect(
-        cmds.up.registerCompletions?.(undefined, mockConfig),
+        cmds.down.registerCompletions?.(undefined, mockConfig),
       ).rejects.toThrow("couldn't find command")
     })
   })
 
   it("does not execute commands while completing", async () => {
     const secretsSpy = vi
-      .spyOn(loadSecretsModule, "loadSecretsCommand")
+      .spyOn(cmds.secrets, "action")
       .mockResolvedValue(undefined)
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined)
 
@@ -260,9 +301,7 @@ describe("CLI Program", () => {
   })
 
   it("parses and propagates options for 'secrets'", async () => {
-    const spy = vi
-      .spyOn(loadSecretsModule, "loadSecretsCommand")
-      .mockResolvedValue(undefined)
+    const spy = vi.spyOn(cmds.secrets, "action").mockResolvedValue(undefined)
     const program = createProgram()
 
     await program.parseAsync([
@@ -307,7 +346,7 @@ describe("CLI Program", () => {
 
   it("parses and propagates options for 'reload-proxy' command", async () => {
     const spy = vi
-      .spyOn(reloadHaproxyModule, "reloadHaproxyCommand")
+      .spyOn(cmds.reloadProxy, "action")
       .mockResolvedValue(undefined)
     const program = createProgram()
 
@@ -317,6 +356,24 @@ describe("CLI Program", () => {
       "--data-dir",
       "/custom/data",
       "reload-proxy",
+    ])
+
+    expect(spy).toHaveBeenCalledWith({
+      dataDir: "/custom/data",
+    })
+    spy.mockRestore()
+  })
+
+  it("parses and propagates options for 'self-update' command", async () => {
+    const spy = vi.spyOn(cmds.selfUpdate, "action").mockResolvedValue(undefined)
+    const program = createProgram()
+
+    await program.parseAsync([
+      "node",
+      "cli.js",
+      "--data-dir",
+      "/custom/data",
+      "self-update",
     ])
 
     expect(spy).toHaveBeenCalledWith({
