@@ -48,6 +48,7 @@ jobs:
         continue-on-error: true
         env:
           TRIVY_OUTPUT: '/code/trivy-results.sarif'
+          TRIVY_FORMAT: 'sarif'
         run: mise run trivy
 
       - name: Upload trivy scan results to GitHub Security

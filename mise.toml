@@ -44,6 +44,7 @@ run = '''
 docker run --rm -v "$PWD:/code" \
   -v /tmp/trivy-cache:/root/.cache/trivy \
   -e TRIVY_OUTPUT=$TRIVY_OUTPUT \
+  -e TRIVY_FORMAT=${TRIVY_FORMAT-'table'} \
   aquasec/trivy:0.74.0@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969 \
   fs --scanners secret,misconfig,vuln \
      --severity=UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
