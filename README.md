@@ -147,7 +147,7 @@ x-requires:
   - database.yaml
 ```
 
-`shoe-string up` starts applications in dependency order, and `down` stops them in reverse. Paths must match the compose files as discovered in your `conf` repository. Dependencies outside the current selection are left untouched (`up` warns when such a dependency isn't already running), and circular dependencies abort with an error.
+`shoe-string up` starts applications in dependency order, and `down` stops them in reverse. Entries are resolved relative to the Compose file that declares them, so sibling stacks are referenced by bare file name. Dependencies outside the current selection are left untouched (`up` warns when such a dependency isn't already running), and circular dependencies abort with an error.
 
 ### Flexible network layout
 

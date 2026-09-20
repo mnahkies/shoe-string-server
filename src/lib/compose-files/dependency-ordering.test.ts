@@ -32,6 +32,39 @@ describe("dependency ordering", () => {
     expect(missing).toEqual([])
   })
 
+  it("resolves relative entries against the declaring compose file", async () => {
+    const database = await createTestComposeFile(
+      path.join(appsDir, "database.yaml"),
+    )
+    const api = await createTestComposeFile(path.join(appsDir, "api.yaml"), {
+      "x-requires": ["database.yaml"],
+    })
+    const worker = await createTestComposeFile(
+      path.join(appsDir, "nested", "worker.yaml"),
+      {"x-requires": ["../database.yaml", "../api.yaml"]},
+    )
+
+    const {startOrder, missing} = await sortByStartOrder([
+      worker,
+      api,
+      database,
+    ])
+
+    expect(startOrder).toEqual([database, api, worker])
+    expect(missing).toEqual([])
+  })
+
+  it("reports relative dependencies outside the selection as missing", async () => {
+    const api = await createTestComposeFile(path.join(appsDir, "api.yaml"), {
+      "x-requires": ["../outside/database.yaml"],
+    })
+
+    const {startOrder, missing} = await sortByStartOrder([api])
+
+    expect(startOrder).toEqual([api])
+    expect(missing).toEqual([path.resolve(appsDir, "../outside/database.yaml")])
+  })
+
   it("emits independent applications in sorted order", async () => {
     const zebra = await createTestComposeFile(path.join(appsDir, "zebra.yaml"))
     const mango = await createTestComposeFile(path.join(appsDir, "mango.yaml"))

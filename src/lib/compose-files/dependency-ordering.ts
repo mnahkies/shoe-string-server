@@ -1,3 +1,4 @@
+import path from "node:path"
 import {z} from "zod"
 import {loadComposeFile} from "./compose-files.ts"
 
@@ -52,9 +53,14 @@ async function sortByDependencies(files: string[]): Promise<{
       .array(z.string())
       .default([])
       .parse(composeSpec["x-requires"])
-    remaining.set(file, new Set(requires.filter((it) => filesSet.has(it))))
+    // entries are resolved against the directory of the declaring compose
+    // file, mirroring how Compose itself resolves relative paths
+    const dependencies = requires.map((it) =>
+      path.resolve(path.dirname(file), it),
+    )
+    remaining.set(file, new Set(dependencies.filter((it) => filesSet.has(it))))
 
-    for (const dependency of requires) {
+    for (const dependency of dependencies) {
       if (!filesSet.has(dependency)) {
         missing.add(dependency)
       }
