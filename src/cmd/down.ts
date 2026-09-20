@@ -7,6 +7,8 @@ import {
   resolveRunningAppTargets,
 } from "../lib/compose-files/compose-files.ts"
 import {sortByStopOrder} from "../lib/compose-files/dependency-ordering.ts"
+import {getOverlayFilePathForComposeFile} from "../lib/compose-files/generated-overlay.ts"
+import {getFsAdaptor} from "../lib/file-system/fs-adaptor.ts"
 import {loadSecrets} from "../lib/secrets.ts"
 import type {Cmd} from "./types.ts"
 
@@ -23,6 +25,7 @@ export async function down(
   options: DownOptions = {},
 ): Promise<void> {
   const files = await resolveAppTargets(config.appsDir, options.targets ?? [])
+  const fs = getFsAdaptor()
 
   const secrets = await loadSecrets({
     file: config.secretsFile,
@@ -44,9 +47,16 @@ export async function down(
   for (const file of stopOrder) {
     console.log(`Stopping application (${file})`)
 
+    const composeArgs = ["--file", file]
+    const overlay = getOverlayFilePathForComposeFile(file)
+
+    if (await fs.exists(overlay)) {
+      composeArgs.push("--file", overlay)
+    }
+
     await $({
       env: envWithSecrets,
-    })`docker compose --file ${file} down --remove-orphans`
+    })`docker compose ${composeArgs} down --remove-orphans`
   }
 
   if (!options.targets || options.targets.length === 0) {
