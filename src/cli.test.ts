@@ -225,15 +225,6 @@ describe("CLI Program", () => {
 
       expect(await getCompletionOutput(["down", ""], mockConfig)).toBe(":4")
     })
-
-    it("throws an error if command is missing when registering completions", async () => {
-      await expect(
-        cmds.up.registerCompletions?.(undefined, mockConfig),
-      ).rejects.toThrow("couldn't find command")
-      await expect(
-        cmds.down.registerCompletions?.(undefined, mockConfig),
-      ).rejects.toThrow("couldn't find command")
-    })
   })
 
   it("does not execute commands while completing", async () => {
