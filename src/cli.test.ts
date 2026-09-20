@@ -1,13 +1,16 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {createProgram, createProgramWithCompletions, main} from "./cli.ts"
-import {downCmd} from "./cmd/down.ts"
-import * as reconcileModule from "./cmd/reconcile.ts"
+import {cmds} from "./cmd/index.ts"
 import * as reloadHaproxyModule from "./cmd/reload-haproxy.ts"
 import * as loadSecretsModule from "./cmd/secrets.ts"
-import {upCmd} from "./cmd/up.ts"
 import type {ServerConfig} from "./config.ts"
+import {getRunningComposeFiles} from "./lib/docker-cli.ts"
 import {resetFsAdaptor, setFsAdaptor} from "./lib/file-system/fs-adaptor.ts"
 import {InMemoryFsAdaptor} from "./lib/file-system/in-memory.fs-adaptor.ts"
+
+vi.mock("./lib/docker-cli.ts", () => ({
+  getRunningComposeFiles: vi.fn(),
+}))
 
 const mockConfig: ServerConfig = {
   rootConfDir: "/dummy",
@@ -104,6 +107,12 @@ describe("CLI Program", () => {
       fsAdaptor = new InMemoryFsAdaptor()
       setFsAdaptor(fsAdaptor)
 
+      vi.mocked(getRunningComposeFiles).mockResolvedValue([
+        "/dummy/applications/app1.yaml",
+        "/dummy/applications/app2.yaml",
+        "/dummy/applications/database.yaml",
+      ])
+
       await fsAdaptor.writeFile("/dummy/applications/app1.yaml", "")
       await fsAdaptor.writeFile("/dummy/applications/app2.yaml", "")
       await fsAdaptor.writeFile("/dummy/applications/database.yaml", "")
@@ -121,20 +130,68 @@ describe("CLI Program", () => {
       expect(output).toContain("database.yaml")
     })
 
-    it("completes application targets dynamically for 'down'", async () => {
+    it("completes only running application targets dynamically for 'down'", async () => {
+      vi.mocked(getRunningComposeFiles).mockResolvedValue([
+        "/dummy/applications/app1.yaml",
+        "/dummy/applications/database.yaml",
+      ])
+
       const output = await getCompletionOutput(["down", ""], mockConfig)
 
       expect(output).toContain("app1.yaml")
-      expect(output).toContain("app2.yaml")
+      expect(output).not.toContain("app2.yaml")
       expect(output).toContain("database.yaml")
+    })
+
+    it("completes multiple application targets dynamically for 'up' and 'down'", async () => {
+      const upOutput = await getCompletionOutput(
+        ["up", "app1.yaml", ""],
+        mockConfig,
+      )
+      expect(upOutput).toContain("app1.yaml")
+      expect(upOutput).toContain("app2.yaml")
+      expect(upOutput).toContain("database.yaml")
+
+      vi.mocked(getRunningComposeFiles).mockResolvedValue([
+        "/dummy/applications/app1.yaml",
+        "/dummy/applications/app2.yaml",
+      ])
+
+      const downOutput = await getCompletionOutput(
+        ["down", "app1.yaml", ""],
+        mockConfig,
+      )
+      expect(downOutput).toContain("app1.yaml")
+      expect(downOutput).toContain("app2.yaml")
+      expect(downOutput).not.toContain("database.yaml")
     })
 
     it("doesn't crash when config is undefined or applications directory is empty", async () => {
       expect(await getCompletionOutput(["up", ""], undefined)).toBe(":4")
       expect(await getCompletionOutput(["down", ""], undefined)).toBe(":4")
 
-      expect(await getCompletionOutput(["up", ""], mockConfig)).toBe(":4")
+      const emptyConfig: ServerConfig = {
+        ...mockConfig,
+        appsDir: "/dummy/empty-applications",
+      }
+
+      expect(await getCompletionOutput(["up", ""], emptyConfig)).toBe(":4")
+      expect(await getCompletionOutput(["down", ""], emptyConfig)).toBe(":4")
+    })
+
+    it("returns no completions for 'down' when no containers are running", async () => {
+      vi.mocked(getRunningComposeFiles).mockResolvedValue([])
+
       expect(await getCompletionOutput(["down", ""], mockConfig)).toBe(":4")
+    })
+
+    it("throws an error if command is missing when registering completions", async () => {
+      await expect(
+        cmds.up.registerCompletions?.(undefined, mockConfig),
+      ).rejects.toThrow("couldn't find command")
+      await expect(
+        cmds.up.registerCompletions?.(undefined, mockConfig),
+      ).rejects.toThrow("couldn't find command")
     })
   })
 
@@ -155,7 +212,7 @@ describe("CLI Program", () => {
   })
 
   it("parses and propagates options for 'up' command", async () => {
-    const spy = vi.spyOn(upCmd, "action").mockResolvedValue(undefined)
+    const spy = vi.spyOn(cmds.up, "action").mockResolvedValue(undefined)
     const program = createProgram()
 
     await program.parseAsync([
@@ -183,7 +240,7 @@ describe("CLI Program", () => {
   })
 
   it("parses and propagates options for 'down' command", async () => {
-    const spy = vi.spyOn(downCmd, "action").mockResolvedValue(undefined)
+    const spy = vi.spyOn(cmds.down, "action").mockResolvedValue(undefined)
     const program = createProgram()
 
     await program.parseAsync([
@@ -231,9 +288,7 @@ describe("CLI Program", () => {
   })
 
   it("parses and propagates options for 'reconcile' command", async () => {
-    const spy = vi
-      .spyOn(reconcileModule, "reconcileCommand")
-      .mockResolvedValue(undefined)
+    const spy = vi.spyOn(cmds.reconcile, "action").mockResolvedValue(undefined)
     const program = createProgram()
 
     await program.parseAsync([

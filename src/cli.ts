@@ -5,12 +5,11 @@ import tab from "@bomb.sh/tab/commander"
 import {Command} from "commander"
 import {z} from "zod"
 import packageJson from "../package.json" with {type: "json"}
-import {downCmd} from "./cmd/down.ts"
-import {reconcileCommand} from "./cmd/reconcile.ts"
+import {cmds} from "./cmd/index.ts"
 import {reloadHaproxyCommand} from "./cmd/reload-haproxy.ts"
 import {loadSecretsCommand} from "./cmd/secrets.ts"
 import {selfUpdateCommand} from "./cmd/self-update.ts"
-import {upCmd} from "./cmd/up.ts"
+
 import {resolveConfig, type ServerConfig} from "./config.ts"
 
 /**
@@ -72,7 +71,7 @@ export function createProgram(): Command {
     .option("--build", "Build images before starting containers.")
     .option("--debug", "Enable debug logging")
     .action((targets, _, cmd) =>
-      upCmd.action({...cmd.optsWithGlobals(), targets}),
+      cmds.up.action({...cmd.optsWithGlobals(), targets}),
     )
 
   program
@@ -82,13 +81,13 @@ export function createProgram(): Command {
     )
     .argument("[targets...]", "Application(s) to stop; defaults to all")
     .action((targets, _, cmd) =>
-      downCmd.action({...cmd.optsWithGlobals(), targets}),
+      cmds.down.action({...cmd.optsWithGlobals(), targets}),
     )
 
   program
     .command("reconcile")
     .description("Fetch git updates and reconcile applications")
-    .action((_, cmd) => reconcileCommand(cmd.optsWithGlobals()))
+    .action((_, cmd) => cmds.reconcile.action(cmd.optsWithGlobals()))
 
   program
     .command("reload-proxy")
@@ -121,8 +120,12 @@ export async function createProgramWithCompletions(
   const program = createProgram()
   const completion = tab(program)
 
-  await upCmd.registerCompletions(completion.commands.get("up"), config)
-  await downCmd.registerCompletions(completion.commands.get("down"), config)
+  await cmds.up.registerCompletions(completion.commands.get("up"), config)
+  await cmds.down.registerCompletions(completion.commands.get("down"), config)
+  await cmds.reconcile.registerCompletions(
+    completion.commands.get("down"),
+    config,
+  )
 
   return program
 }
