@@ -31,9 +31,7 @@ export interface LoadSecretsCommandOptions extends GlobalOptions {
   decrypt?: (filePath: string) => Promise<string>
 }
 
-export async function loadSecretsCommand(
-  opts: LoadSecretsCommandOptions,
-): Promise<void> {
+export async function action(opts: LoadSecretsCommandOptions): Promise<void> {
   const config = await resolveConfig({
     ...opts,
     secretsFile: opts.secretsFile,
@@ -65,6 +63,6 @@ export async function registerCompletions(
 }
 
 export const secretsCmd = {
-  action: loadSecretsCommand,
+  action,
   registerCompletions,
 } satisfies Cmd

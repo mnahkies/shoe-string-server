@@ -3,7 +3,7 @@ import {fileURLToPath} from "node:url"
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {resetFsAdaptor, setFsAdaptor} from "../lib/file-system/fs-adaptor.ts"
 import {InMemoryFsAdaptor} from "../lib/file-system/in-memory.fs-adaptor.ts"
-import {selfUpdate, selfUpdateCommand} from "./self-update.ts"
+import {action, selfUpdate} from "./self-update.ts"
 
 const commandCalls: string[] = []
 let commandResults: Record<
@@ -289,7 +289,7 @@ describe("self-update", () => {
         "mise exec -- pnpm run build": {exitCode: 0},
       }
 
-      await selfUpdateCommand()
+      await action()
       expect(commandCalls).toContain("git remote")
     })
   })

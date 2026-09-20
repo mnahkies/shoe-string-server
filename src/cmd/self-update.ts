@@ -111,9 +111,7 @@ export async function selfUpdate(
   }
 }
 
-export async function selfUpdateCommand(
-  _opts: GlobalOptions = {},
-): Promise<void> {
+export async function action(_opts: GlobalOptions = {}): Promise<void> {
   await selfUpdate()
 }
 
@@ -126,6 +124,6 @@ export async function registerCompletions(
 }
 
 export const selfUpdateCmd = {
-  action: selfUpdateCommand,
+  action,
   registerCompletions,
 } satisfies Cmd

@@ -32,7 +32,7 @@ export async function reloadHaproxy(
  * Regenerates proxy configs for every proxy in the cluster config, then reloads
  * each via SIGHUP if its container is running.
  */
-export async function reloadHaproxyCommand(opts: GlobalOptions): Promise<void> {
+export async function action(opts: GlobalOptions): Promise<void> {
   const config = await resolveConfig(opts)
   const discovered = await discoverProxies(config.appsDir)
 
@@ -58,6 +58,6 @@ export async function registerCompletions(
 }
 
 export const reloadHaproxyCmd = {
-  action: reloadHaproxyCommand,
+  action,
   registerCompletions,
 } satisfies Cmd

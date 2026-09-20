@@ -64,7 +64,7 @@ export async function reconcile(opts: GlobalOptions = {}): Promise<boolean> {
   return hasChanges
 }
 
-export async function reconcileCommand(opts: GlobalOptions): Promise<void> {
+export async function action(opts: GlobalOptions): Promise<void> {
   await reconcile(opts)
 }
 
@@ -77,6 +77,6 @@ export async function registerCompletions(
 }
 
 export const reconcileCmd = {
-  action: reconcileCommand,
+  action,
   registerCompletions,
 } satisfies Cmd

@@ -45,9 +45,7 @@ export async function down(
   }
 }
 
-export async function downCommand(
-  opts: GlobalOptions & DownOptions,
-): Promise<void> {
+export async function action(opts: GlobalOptions & DownOptions): Promise<void> {
   const config = await resolveConfig(opts)
   await down(config, {targets: opts.targets})
 }
@@ -83,6 +81,6 @@ export async function registerCompletions(
 }
 
 export const downCmd = {
-  action: downCommand,
+  action,
   registerCompletions,
 } satisfies Cmd

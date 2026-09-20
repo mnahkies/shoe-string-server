@@ -132,9 +132,7 @@ export async function up(
   await reloadAffectedProxies(config, files)
 }
 
-export async function upCommand(
-  opts: GlobalOptions & UpOptions,
-): Promise<void> {
+export async function action(opts: GlobalOptions & UpOptions): Promise<void> {
   const config = await resolveConfig(opts)
   await up(config, {
     targets: opts.targets,
@@ -175,6 +173,6 @@ export async function registerCompletions(
 }
 
 export const upCmd = {
-  action: upCommand,
+  action,
   registerCompletions,
 } satisfies Cmd
