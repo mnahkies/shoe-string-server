@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it} from "vitest"
-import {createProgram} from "../cli.ts"
+import type {ServerConfig} from "../config.ts"
 import {resetFsAdaptor, setFsAdaptor} from "../lib/file-system/fs-adaptor.ts"
 import {InMemoryFsAdaptor} from "../lib/file-system/in-memory.fs-adaptor.ts"
 import {action, escapeShellValue, formatExports, formatKeys} from "./secrets.ts"
@@ -72,22 +72,23 @@ describe("load-secrets command", () => {
   })
 
   describe("loadSecretsCommand", () => {
-    beforeEach(async () => {
-      await fsAdaptor.writeFile("/test/cluster/cluster.yaml", "{}\n")
-      await fsAdaptor.mkdir("/test/cluster/applications", {recursive: true})
-    })
+    const baseConfig: ServerConfig = {
+      rootConfDir: "/test/cluster",
+      secretsFile: "/test/cluster/secrets.encrypted.yaml",
+      appsDir: "/test/cluster/applications",
+      proxies: [],
+      environment: {},
+    }
 
     it("prints export statements for loaded secrets", async () => {
-      const secretsFile = "/test/cluster/secrets.encrypted.yaml"
-      await fsAdaptor.writeFile(secretsFile, "dummy")
+      await fsAdaptor.writeFile(baseConfig.secretsFile, "dummy")
 
       const logs: string[] = []
       const originalLog = console.log
       console.log = (msg: string) => logs.push(msg)
 
       try {
-        await action({
-          dataDir: "/test/cluster",
+        await action(baseConfig, {}, undefined, {
           decrypt: async () => "key: value\nother: secret",
         })
 
@@ -98,19 +99,21 @@ describe("load-secrets command", () => {
     })
 
     it("prints secret keys when list option is true", async () => {
-      const secretsFile = "/test/cluster/secrets.encrypted.yaml"
-      await fsAdaptor.writeFile(secretsFile, "dummy")
+      await fsAdaptor.writeFile(baseConfig.secretsFile, "dummy")
 
       const logs: string[] = []
       const originalLog = console.log
       console.log = (msg: string) => logs.push(msg)
 
       try {
-        await action({
-          dataDir: "/test/cluster",
-          list: true,
-          decrypt: async () => "key: value\nother: secret",
-        })
+        await action(
+          baseConfig,
+          {
+            list: true,
+          },
+          undefined,
+          {decrypt: async () => "key: value\nother: secret"},
+        )
 
         expect(logs).toEqual(["KEY", "OTHER"])
       } finally {
@@ -119,19 +122,21 @@ describe("load-secrets command", () => {
     })
 
     it("filters secrets when filter option is provided", async () => {
-      const secretsFile = "/test/cluster/secrets.encrypted.yaml"
-      await fsAdaptor.writeFile(secretsFile, "dummy")
+      await fsAdaptor.writeFile(baseConfig.secretsFile, "dummy")
 
       const logs: string[] = []
       const originalLog = console.log
       console.log = (msg: string) => logs.push(msg)
 
       try {
-        await action({
-          dataDir: "/test/cluster",
-          filter: "KEY",
-          decrypt: async () => "key: value\nother: secret",
-        })
+        await action(
+          baseConfig,
+          {
+            filter: "KEY",
+          },
+          undefined,
+          {decrypt: async () => "key: value\nother: secret"},
+        )
 
         expect(logs).toEqual(["export KEY='value'"])
       } finally {
@@ -139,7 +144,7 @@ describe("load-secrets command", () => {
       }
     })
 
-    it("loads secrets from custom file specified via file option", async () => {
+    it("loads secrets from custom file specified in config", async () => {
       const customSecretsFile = "/test/cluster/custom-secrets.yaml"
       await fsAdaptor.writeFile(customSecretsFile, "dummy")
 
@@ -148,44 +153,25 @@ describe("load-secrets command", () => {
       console.log = (msg: string) => logs.push(msg)
 
       try {
-        await action({
-          dataDir: "/test/cluster",
-          secretsFile: "custom-secrets.yaml",
-          decrypt: async (filePath) => {
-            expect(filePath).toBe(customSecretsFile)
-            return "custom_key: custom_val"
+        await action(
+          {
+            ...baseConfig,
+            secretsFile: customSecretsFile,
           },
-        })
+          {},
+          {},
+          {
+            decrypt: async (filePath) => {
+              expect(filePath).toBe(customSecretsFile)
+              return "custom_key: custom_val"
+            },
+          },
+        )
 
         expect(logs).toEqual(["export CUSTOM_KEY='custom_val'"])
       } finally {
         console.log = originalLog
       }
-    })
-
-    it("throws error when secrets file does not exist", async () => {
-      await fsAdaptor.writeFile("/test/empty/cluster.yaml", "{}\n")
-      await fsAdaptor.mkdir("/test/empty/applications", {recursive: true})
-
-      await expect(
-        action({
-          dataDir: "/test/empty",
-          decrypt: async () => "",
-        }),
-      ).rejects.toThrow(
-        /secretsFile must exist, got: \/test\/empty\/secrets.encrypted.yaml/,
-      )
-    })
-  })
-
-  describe("CLI program integration", () => {
-    it("creates program with load-secrets command and aliases", () => {
-      const program = createProgram()
-      const loadSecretsCmd = program.commands.find(
-        (cmd) => cmd.name() === "secrets",
-      )
-
-      expect(loadSecretsCmd).toBeDefined()
     })
   })
 })

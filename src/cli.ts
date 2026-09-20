@@ -39,10 +39,24 @@ export function parseMinimalConfigArgs(args: string[]) {
   })
 }
 
+type MaybeConfig = {config?: ServerConfig | undefined; loadError?: unknown}
+
+function unwrapConfig(maybeConfig: MaybeConfig): ServerConfig {
+  if (maybeConfig.config !== undefined) {
+    return maybeConfig.config
+  }
+
+  throw maybeConfig.loadError instanceof Error
+    ? maybeConfig.loadError
+    : new Error("Could not load server configuration", {
+        cause: maybeConfig.loadError,
+      })
+}
+
 /**
  * Creates the full CLI program, including all commands and options.
  */
-export function createProgram(): Command {
+export function createProgram(maybeConfig: MaybeConfig): Command {
   const program = new Command()
     .name("shoe-string")
     .version(packageJson.version)
@@ -66,8 +80,11 @@ export function createProgram(): Command {
     )
     .option("--build", "Build images before starting containers.")
     .option("--debug", "Enable debug logging")
-    .action((targets, _, cmd) =>
-      cmds.up.action({...cmd.optsWithGlobals(), targets}),
+    .action((targets, opts) =>
+      cmds.up.action(unwrapConfig(maybeConfig), {
+        ...opts,
+        targets,
+      }),
     )
 
   program
@@ -76,19 +93,28 @@ export function createProgram(): Command {
       "Stop applications and prune unused networks (targeted by default)",
     )
     .argument("[targets...]", "Application(s) to stop; defaults to all")
-    .action((targets, _, cmd) =>
-      cmds.down.action({...cmd.optsWithGlobals(), targets}),
+    .action((targets, opts) =>
+      cmds.down.action(unwrapConfig(maybeConfig), {
+        ...opts,
+        targets,
+      }),
     )
 
   program
     .command("reconcile")
     .description("Fetch git updates and reconcile applications")
-    .action((_, cmd) => cmds.reconcile.action(cmd.optsWithGlobals()))
+    .action((_, cmd) =>
+      cmds.reconcile.action(
+        unwrapConfig(maybeConfig),
+        undefined,
+        cmd.optsWithGlobals(),
+      ),
+    )
 
   program
     .command("reload-proxy")
     .description("Re-generate proxy configs and send HUP signal")
-    .action((_, cmd) => cmds.reloadProxy.action(cmd.optsWithGlobals()))
+    .action(() => cmds.reloadProxy.action(unwrapConfig(maybeConfig)))
 
   program
     .command("secrets")
@@ -100,37 +126,42 @@ export function createProgram(): Command {
       "-f, --filter <filter>",
       "Filter secret keys (separated by | or comma)",
     )
-    .action((_, cmd) => cmds.secrets.action(cmd.optsWithGlobals()))
+    .action((opts) => cmds.secrets.action(unwrapConfig(maybeConfig), opts))
 
   program
     .command("self-update")
     .description("Update shoe-string to the latest version")
-    .action((_, cmd) => cmds.selfUpdate.action(cmd.optsWithGlobals()))
+    .option(
+      "--installation-dir <path>",
+      "Override the automatically detected installation directory",
+    )
+    .action((opts) => cmds.selfUpdate.action(maybeConfig.config, opts))
 
   return program
 }
 
-export async function createProgramWithCompletions(
-  config: ServerConfig | undefined,
-) {
-  const program = createProgram()
+export async function createProgramWithCompletions(maybeConfig: MaybeConfig) {
+  const program = createProgram(maybeConfig)
   const completion = tab(program)
 
   for (const [name, cmd] of Object.entries(cmds)) {
-    await cmd.registerCompletions?.(completion.commands.get(name), config)
+    await cmd.registerCompletions?.(
+      completion.commands.get(name),
+      maybeConfig.config,
+    )
   }
 
   return program
 }
 
 export async function main(args: string[] = process.argv): Promise<void> {
-  const config = await resolveConfig(parseMinimalConfigArgs([...args])).catch(
-    () => {
-      /* we don't want to fail to provide completions if config isn't available */
-      return undefined
-    },
+  const maybeConfig: MaybeConfig = await resolveConfig(
+    parseMinimalConfigArgs([...args]),
   )
-  const program = await createProgramWithCompletions(config)
+    .then((config) => ({config}))
+    .catch((err) => ({loadError: err}))
+
+  const program = await createProgramWithCompletions(maybeConfig)
   await program.parseAsync([...args])
 }
 

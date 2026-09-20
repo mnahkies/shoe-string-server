@@ -1,12 +1,7 @@
 import path from "node:path"
 import type {Command} from "@bomb.sh/tab"
 import {$} from "zx"
-import {
-  buildProcessEnv,
-  type GlobalOptions,
-  resolveConfig,
-  type ServerConfig,
-} from "../config.ts"
+import {buildProcessEnv, type ServerConfig} from "../config.ts"
 import {
   resolveAppTargets,
   resolveRunningAppTargets,
@@ -45,9 +40,11 @@ export async function down(
   }
 }
 
-export async function action(opts: GlobalOptions & DownOptions): Promise<void> {
-  const config = await resolveConfig(opts)
-  await down(config, {targets: opts.targets})
+export async function action(
+  config: ServerConfig,
+  opts: DownOptions = {},
+): Promise<void> {
+  await down(config, opts)
 }
 
 export async function registerCompletions(
@@ -83,4 +80,4 @@ export async function registerCompletions(
 export const downCmd = {
   action,
   registerCompletions,
-} satisfies Cmd
+} satisfies Cmd<DownOptions>

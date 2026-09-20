@@ -1,4 +1,3 @@
-import path from "node:path"
 import type {Command} from "@bomb.sh/tab"
 import {$} from "zx"
 import {
@@ -10,19 +9,18 @@ import {withCwd} from "../util/cwd.ts"
 import type {Cmd} from "./types.ts"
 import {up} from "./up.ts"
 
-export async function reconcile(opts: GlobalOptions = {}): Promise<boolean> {
-  const rootConfDir = path.resolve(
-    opts.dataDir || process.env.DATA_BASE_PATH || process.cwd(),
-  )
-
-  const hasChanges = await withCwd(rootConfDir, async () => {
-    console.log(`Fetching git updates in ${rootConfDir}...`)
+export async function reconcile(
+  config: ServerConfig,
+  globalOpts: GlobalOptions,
+): Promise<boolean> {
+  const hasChanges = await withCwd(config.rootConfDir, async () => {
+    console.log(`Fetching git updates in ${config.rootConfDir}...`)
 
     const fetchRes = await $`git fetch`.nothrow()
 
     if (fetchRes.exitCode !== 0) {
       throw new Error(
-        `Git fetch failed in ${rootConfDir}: ${fetchRes.stderr.trim() || "unknown error"}`,
+        `Git fetch failed in ${config.rootConfDir}: ${fetchRes.stderr.trim() || "unknown error"}`,
       )
     }
 
@@ -57,15 +55,20 @@ export async function reconcile(opts: GlobalOptions = {}): Promise<boolean> {
   })
 
   if (hasChanges) {
-    const config = await resolveConfig(opts)
-    await up(config)
+    // cluster config may have changed on disk after the pull
+    const freshConfig = await resolveConfig(globalOpts)
+    await up(freshConfig)
   }
 
   return hasChanges
 }
 
-export async function action(opts: GlobalOptions): Promise<void> {
-  await reconcile(opts)
+export async function action(
+  config: ServerConfig,
+  _: unknown,
+  globalOpts: GlobalOptions,
+): Promise<void> {
+  await reconcile(config, globalOpts)
 }
 
 export async function registerCompletions(

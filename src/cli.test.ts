@@ -25,7 +25,7 @@ async function getCompletionOutput(
   const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined)
 
   try {
-    const program = await createProgramWithCompletions(config)
+    const program = await createProgramWithCompletions({config})
     await program.parseAsync(["node", "cli.ts", "complete", "--", ...args])
 
     return logSpy.mock.calls.map((args) => args.join(" ")).join("\n")
@@ -36,7 +36,7 @@ async function getCompletionOutput(
 
 describe("CLI Program", () => {
   it("registers all expected cmd and aliases", () => {
-    const program = createProgram()
+    const program = createProgram({})
     const commandNames = program.commands.map((cmd) => cmd.name())
 
     expect(commandNames).toContain("up")
@@ -48,14 +48,14 @@ describe("CLI Program", () => {
   })
 
   it("configures global options", () => {
-    const program = createProgram()
+    const program = createProgram({})
     const optionNames = program.options.map((opt) => opt.long)
     expect(optionNames).toContain("--data-dir")
     expect(optionNames).toContain("--secrets-file")
   })
 
   it("registers shell completion commands", async () => {
-    const program = await createProgramWithCompletions(undefined)
+    const program = await createProgramWithCompletions({})
 
     expect(program.commands.map((cmd) => cmd.name())).toContain("complete")
   })
@@ -245,15 +245,11 @@ describe("CLI Program", () => {
 
   it("parses and propagates options for 'up' command", async () => {
     const spy = vi.spyOn(cmds.up, "action").mockResolvedValue(undefined)
-    const program = createProgram()
+    const program = createProgram({config: mockConfig})
 
     await program.parseAsync([
       "node",
       "cli.js",
-      "--data-dir",
-      "/custom/data",
-      "--secrets-file",
-      "/custom/secrets.yaml",
       "up",
       "app1",
       "app2",
@@ -261,9 +257,7 @@ describe("CLI Program", () => {
       "--build",
     ])
 
-    expect(spy).toHaveBeenCalledWith({
-      dataDir: "/custom/data",
-      secretsFile: "/custom/secrets.yaml",
+    expect(spy).toHaveBeenCalledWith(mockConfig, {
       targets: ["app1", "app2"],
       forceRecreate: true,
       build: true,
@@ -273,19 +267,11 @@ describe("CLI Program", () => {
 
   it("parses and propagates options for 'down' command", async () => {
     const spy = vi.spyOn(cmds.down, "action").mockResolvedValue(undefined)
-    const program = createProgram()
+    const program = createProgram({config: mockConfig})
 
-    await program.parseAsync([
-      "node",
-      "cli.js",
-      "--data-dir",
-      "/custom/data",
-      "down",
-      "app1",
-    ])
+    await program.parseAsync(["node", "cli.js", "down", "app1"])
 
-    expect(spy).toHaveBeenCalledWith({
-      dataDir: "/custom/data",
+    expect(spy).toHaveBeenCalledWith(mockConfig, {
       targets: ["app1"],
     })
     spy.mockRestore()
@@ -293,24 +279,18 @@ describe("CLI Program", () => {
 
   it("parses and propagates options for 'secrets'", async () => {
     const spy = vi.spyOn(cmds.secrets, "action").mockResolvedValue(undefined)
-    const program = createProgram()
+    const program = createProgram({config: mockConfig})
 
     await program.parseAsync([
       "node",
       "cli.js",
-      "--data-dir",
-      "/custom/data",
-      "--secrets-file",
-      "/global/secrets.yaml",
       "secrets",
       "--filter",
       "FOO|BAR",
       "--list",
     ])
 
-    expect(spy).toHaveBeenCalledWith({
-      dataDir: "/custom/data",
-      secretsFile: "/global/secrets.yaml",
+    expect(spy).toHaveBeenCalledWith(mockConfig, {
       filter: "FOO|BAR",
       list: true,
     })
@@ -319,18 +299,21 @@ describe("CLI Program", () => {
 
   it("parses and propagates options for 'reconcile' command", async () => {
     const spy = vi.spyOn(cmds.reconcile, "action").mockResolvedValue(undefined)
-    const program = createProgram()
+    const program = createProgram({config: mockConfig})
 
     await program.parseAsync([
       "node",
       "cli.js",
       "--data-dir",
       "/custom/data",
+      "--secrets-file",
+      "/custom/secrets.yaml",
       "reconcile",
     ])
 
-    expect(spy).toHaveBeenCalledWith({
+    expect(spy).toHaveBeenCalledWith(mockConfig, undefined, {
       dataDir: "/custom/data",
+      secretsFile: "/custom/secrets.yaml",
     })
     spy.mockRestore()
   })
@@ -339,37 +322,21 @@ describe("CLI Program", () => {
     const spy = vi
       .spyOn(cmds.reloadProxy, "action")
       .mockResolvedValue(undefined)
-    const program = createProgram()
+    const program = createProgram({config: mockConfig})
 
-    await program.parseAsync([
-      "node",
-      "cli.js",
-      "--data-dir",
-      "/custom/data",
-      "reload-proxy",
-    ])
+    await program.parseAsync(["node", "cli.js", "reload-proxy"])
 
-    expect(spy).toHaveBeenCalledWith({
-      dataDir: "/custom/data",
-    })
+    expect(spy).toHaveBeenCalledWith(mockConfig)
     spy.mockRestore()
   })
 
   it("parses and propagates options for 'self-update' command", async () => {
     const spy = vi.spyOn(cmds.selfUpdate, "action").mockResolvedValue(undefined)
-    const program = createProgram()
+    const program = createProgram({config: mockConfig})
 
-    await program.parseAsync([
-      "node",
-      "cli.js",
-      "--data-dir",
-      "/custom/data",
-      "self-update",
-    ])
+    await program.parseAsync(["node", "cli.js", "self-update"])
 
-    expect(spy).toHaveBeenCalledWith({
-      dataDir: "/custom/data",
-    })
+    expect(spy).toHaveBeenCalledWith(mockConfig, {})
     spy.mockRestore()
   })
 })

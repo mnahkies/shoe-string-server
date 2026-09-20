@@ -1,12 +1,7 @@
 import path from "node:path"
 import type {Command} from "@bomb.sh/tab"
 import {$} from "zx"
-import {
-  buildProcessEnv,
-  type GlobalOptions,
-  resolveConfig,
-  type ServerConfig,
-} from "../config.ts"
+import {buildProcessEnv, type ServerConfig} from "../config.ts"
 import {resolveAppTargets} from "../lib/compose-files/compose-files.ts"
 import {
   generateOverlayFileForComposeFile,
@@ -132,14 +127,11 @@ export async function up(
   await reloadAffectedProxies(config, files)
 }
 
-export async function action(opts: GlobalOptions & UpOptions): Promise<void> {
-  const config = await resolveConfig(opts)
-  await up(config, {
-    targets: opts.targets,
-    forceRecreate: opts.forceRecreate,
-    build: opts.build,
-    debug: opts.debug,
-  })
+export async function action(
+  config: ServerConfig,
+  opts: UpOptions = {},
+): Promise<void> {
+  await up(config, opts)
 }
 
 export async function registerCompletions(
@@ -175,4 +167,4 @@ export async function registerCompletions(
 export const upCmd = {
   action,
   registerCompletions,
-} satisfies Cmd
+} satisfies Cmd<UpOptions>
