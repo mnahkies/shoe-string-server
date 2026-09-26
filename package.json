@@ -41,7 +41,7 @@
     "zx": "^8.8.5"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.13",
+    "@biomejs/biome": "^2.5.14",
     "@commander-js/extra-typings": "^15.0.0",
     "@tsconfig/node26": "^26.0.1",
     "@tsconfig/strictest": "^2.0.8",
