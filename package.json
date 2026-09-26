@@ -46,7 +46,7 @@
     "@tsconfig/node26": "^26.0.1",
     "@tsconfig/strictest": "^2.0.8",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^26.5.1",
+    "@types/node": "^26.6.2",
     "@types/semver": "^7.8.0",
     "husky": "^9.1.7",
     "jscpd": "^5.2.0",
