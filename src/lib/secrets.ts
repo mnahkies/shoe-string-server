@@ -44,7 +44,7 @@ export function flattenSecrets(
         flattenSecrets(value, fullKey, currentPath, seenPaths),
       )
     } else {
-      const targetKey = fullKey.toUpperCase()
+      const targetKey = fullKey.toUpperCase().replaceAll(".", "_")
       if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(targetKey)) {
         throw new Error(
           `Invalid secret key name '${targetKey}' at '${currentPath}'. Secret keys must contain only alphanumeric characters and underscores, and cannot start with a digit.`,

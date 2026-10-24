@@ -16,6 +16,12 @@ describe("secrets", () => {
           port: 5432,
           ssl: true,
         },
+        lldap: {
+          password: {
+            "sa.foo": "foo-pass",
+            "sa.bar": "bar-pass",
+          },
+        },
       }
 
       const flattened = flattenSecrets(input)
@@ -26,6 +32,8 @@ describe("secrets", () => {
         POSTGRES_PASSWORD: "pgpassword",
         POSTGRES_PORT: "5432",
         POSTGRES_SSL: "true",
+        LLDAP_PASSWORD_SA_FOO: "foo-pass",
+        LLDAP_PASSWORD_SA_BAR: "bar-pass",
       })
     })
 
