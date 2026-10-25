@@ -69,6 +69,16 @@ export function createProgram(maybeConfig: MaybeConfig): Command {
       "--secrets-file <path>",
       "Path to secrets file (default: DATA_BASE_PATH/secrets.encrypted.yaml)",
     )
+    .showSuggestionAfterError(true)
+    .showHelpAfterError(true)
+
+  program
+    .command("init")
+    .description("Setup wizard to initialize a new cluster")
+    .argument("<destination-dir>", "Path to destination directory")
+    .action((destinationDir) => {
+      return cmds.init.action(undefined, {destinationDir}, undefined)
+    })
 
   program
     .command("up")

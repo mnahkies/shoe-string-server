@@ -1,4 +1,5 @@
 import {downCmd} from "./down.ts"
+import {initCmd} from "./init.ts"
 import {reconcileCmd} from "./reconcile.ts"
 import {reloadHaproxyCmd} from "./reload-haproxy.ts"
 import {secretsCmd} from "./secrets.ts"
@@ -6,6 +7,7 @@ import {selfUpdateCmd} from "./self-update.ts"
 import {upCmd} from "./up.ts"
 
 export const cmds = {
+  init: initCmd,
   down: downCmd,
   reconcile: reconcileCmd,
   reloadProxy: reloadHaproxyCmd,

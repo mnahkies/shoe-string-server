@@ -25,6 +25,7 @@ Keep changes scoped to the requested task and preserve unrelated local work.
 | `src/lib/self-update/`                   | Helpers to support self-update functionality.                                                                    |
 | `src/lib/secrets.ts`                     | SOPS decryption, flattening, and filtering.                                                                      |
 | `src/testing/`                           | Shared Compose fixture builders for unit tests.                                                                  |
+| `src/registry/`                          | Application registry: typed compose objects plus Eta-rendered auxiliary files (`application-registry.ts`, `applications/`, `templates/`, `file-templates.ts`); templates copied into `dist/` by the build. |
 | `src/types/docker-compose-extensions.ts` | Handwritten project-specific Compose types and schemas.                                                          |
 | `src/utils`                              | General utility functions                                                                                        |
 | `e2e/`                                   | Real container/SELinux tests and public test fixtures.                                                           |
@@ -48,6 +49,7 @@ Keep changes scoped to the requested task and preserve unrelated local work.
 * `up` starts targets in `x-requires` dependency order (independents in sorted order); `down` stops them in reverse. Dependencies outside the target selection are never started or stopped by these commands; `up` warns when such a dependency isn't already running, and circular dependencies abort with an error.
 * `up` creates required external networks and generates all discovered proxy configurations before starting any selected container. After startup it reloads only proxies whose own Compose file was started; `reload-proxy` explicitly reloads all discovered proxies.
 * Proxy names and proxy container names must be unique. The four HAProxy template placeholders must each occur exactly once. Preserve proxy-specific routing and hand-authored template block handling.
+* Registered applications (`src/registry/applications/`) render through `applicationRegistry`: the compose project name doubles as the compose file name under `appsDir`, auxiliary file paths are relative to the cluster root, and the `volume.conf`/`volume.data` helpers enforce the `${DATA_BASE_PATH}/conf|data` layout. Proxy conf directories default to `conf/haproxy/<name>`; every renderable application file has a snapshot test.
 * Secret flattening rejects arrays, invalid environment-variable names, and collisions. Preserve shell escaping when formatting exports, and keep key-only listing separate from plaintext value output.
 * Targeted `down` must not prune networks. Untargeted `down` currently performs engine-wide pruning; never broaden destructive behavior silently.
 
