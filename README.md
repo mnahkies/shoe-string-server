@@ -62,8 +62,8 @@ Example:
 ```shell
 ├── applications
 |   ├── example.yaml
-|   ├── internal.yaml
-|   └── public.yaml
+|   ├── haproxy-internal.yaml
+|   └── haproxy-public.yaml
 ├── conf
 |   ├── example
 |   |   └── whatever.yaml
