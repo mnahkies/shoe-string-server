@@ -28,6 +28,7 @@ describe("discoverProxies", () => {
           container_name: "haproxy-internal",
           "x-ext-proxy": {
             name: "internal",
+            confDir: `$\{DATA_BASE_PATH}/conf/haproxy/internal`,
           },
         },
       },
@@ -40,6 +41,7 @@ describe("discoverProxies", () => {
         name: "internal",
         containerName: "haproxy-internal",
         appsFile: path.join(dir, "haproxy-internal.yaml"),
+        confDir: `$\{DATA_BASE_PATH}/conf/haproxy/internal`,
         serviceName: "haproxy-internal",
       },
     ])
@@ -68,6 +70,7 @@ describe("discoverProxies", () => {
           hostname: "edge",
           "x-ext-proxy": {
             name: "edge",
+            confDir: `$\{DATA_BASE_PATH}/conf/haproxy/edge`,
           },
         },
       },
@@ -97,7 +100,10 @@ describe("discoverProxies", () => {
       services: {
         proxy1: {
           container_name: "haproxy1",
-          "x-ext-proxy": {name: "public"},
+          "x-ext-proxy": {
+            name: "public",
+            confDir: `$\{DATA_BASE_PATH}/conf/haproxy/public`,
+          },
         },
       },
     })
@@ -105,7 +111,10 @@ describe("discoverProxies", () => {
       services: {
         proxy2: {
           container_name: "haproxy2",
-          "x-ext-proxy": {name: "public"},
+          "x-ext-proxy": {
+            name: "public",
+            confDir: `$\{DATA_BASE_PATH}/conf/haproxy/public`,
+          },
         },
       },
     })
@@ -120,7 +129,10 @@ describe("discoverProxies", () => {
       services: {
         proxy1: {
           container_name: "shared-name",
-          "x-ext-proxy": {name: "proxy1"},
+          "x-ext-proxy": {
+            name: "proxy1",
+            confDir: `$\{DATA_BASE_PATH}/conf/haproxy/proxy1`,
+          },
         },
       },
     })
@@ -128,7 +140,10 @@ describe("discoverProxies", () => {
       services: {
         proxy2: {
           container_name: "shared-name",
-          "x-ext-proxy": {name: "proxy2"},
+          "x-ext-proxy": {
+            name: "proxy2",
+            confDir: `$\{DATA_BASE_PATH}/conf/haproxy/proxy2`,
+          },
         },
       },
     })

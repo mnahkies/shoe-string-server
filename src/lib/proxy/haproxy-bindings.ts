@@ -12,6 +12,7 @@ export interface DiscoveredProxy {
   containerName: string
   /** Compose file the proxy was discovered in. */
   appsFile: string
+  confDir: string
   /** Service key within the compose file. */
   serviceName: string
 }
@@ -75,7 +76,7 @@ export async function discoverProxies(
       continue
     }
 
-    const name = extProxyMarkSchema.parse(service["x-ext-proxy"]).name
+    const {name, confDir} = extProxyMarkSchema.parse(service["x-ext-proxy"])
 
     if (!name || !service.container_name) {
       throw new Error(
@@ -103,6 +104,7 @@ export async function discoverProxies(
       name,
       serviceName,
       containerName: service.container_name,
+      confDir,
       appsFile: file,
     })
   }

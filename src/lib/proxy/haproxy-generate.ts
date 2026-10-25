@@ -1,7 +1,7 @@
 import * as path from "node:path"
 import {$} from "zx"
-import type {ProxyConfig} from "../../config.ts"
 import {getFsAdaptor} from "../file-system/fs-adaptor.ts"
+import {resolveRootConfPath} from "../file-system/fs-utils.ts"
 import {
   bindingAttachesToProxy,
   getHaproxyBindings,
@@ -265,16 +265,18 @@ export function validateTemplatePlaceholders(
  */
 export async function generateHaproxyConfig(
   applicationsDirectory: string,
-  proxyConfig: ProxyConfig,
+  proxyConfig: {name: string; confDir: string},
+  rootConfDir: string,
   dhparamBits = 2048,
 ): Promise<void> {
   const fs = getFsAdaptor()
   const {bindings: applications} = await getHaproxyBindings(
     applicationsDirectory,
   )
-  const templatePath = path.join(proxyConfig.conf, "haproxy.cfg.template")
-  const outputPath = path.join(proxyConfig.conf, "haproxy.cfg")
-  const dhParamsPath = path.join(proxyConfig.conf, "dhparam")
+  const confDir = resolveRootConfPath(proxyConfig.confDir, rootConfDir)
+  const templatePath = path.join(confDir, "haproxy.cfg.template")
+  const outputPath = path.join(confDir, "haproxy.cfg")
+  const dhParamsPath = path.join(confDir, "dhparam")
 
   if (!(await fs.exists(templatePath))) {
     throw new Error(`Template file not found at '${templatePath}'`)
@@ -298,7 +300,7 @@ export async function generateHaproxyConfig(
   ].join("\n")
 
   const tempPath = path.join(
-    proxyConfig.conf,
+    confDir,
     `.haproxy.cfg.tmp.${Date.now()}.${Math.random().toString(36).slice(2)}`,
   )
   await fs.writeFile(tempPath, output)

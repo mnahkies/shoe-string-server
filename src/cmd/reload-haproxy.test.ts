@@ -3,7 +3,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
 import {resetFsAdaptor, setFsAdaptor} from "../lib/file-system/fs-adaptor.ts"
 import {InMemoryFsAdaptor} from "../lib/file-system/in-memory.fs-adaptor.ts"
 import {createTestComposeFile} from "../testing/compose-fixture.ts"
-import {action, reloadHaproxy} from "./reload-haproxy.ts"
+import {reloadHaproxy} from "./reload-haproxy.ts"
 
 interface ExecutedCommand {
   cmd: string
@@ -45,8 +45,9 @@ vi.mock("zx", () => {
 
 describe("reload-haproxy command", () => {
   let fsAdaptor: InMemoryFsAdaptor
-  const appsDir = "/test/cluster/apps"
-  const proxyConfDir = "/test/cluster/conf/haproxy"
+  const rootConfDir = "/test/cluster"
+  const appsDir = `${rootConfDir}/apps`
+  const proxyConfDir = `${rootConfDir}/conf/haproxy`
 
   const templateContent = [
     "global",
@@ -81,16 +82,23 @@ describe("reload-haproxy command", () => {
       services: {
         haproxy: {
           container_name: "haproxy",
-          "x-ext-proxy": {name: "public"},
+          "x-ext-proxy": {
+            name: "public",
+            confDir: `$\{DATA_BASE_PATH}/conf/haproxy/public`,
+          },
         },
       },
     })
 
-    await reloadHaproxy(appsDir, {
-      name: "public",
-      containerName: "haproxy",
-      conf: proxyConfDir,
-    })
+    await reloadHaproxy(
+      appsDir,
+      {
+        name: "public",
+        containerName: "haproxy",
+        confDir: proxyConfDir,
+      },
+      rootConfDir,
+    )
 
     expect(await fsAdaptor.exists(path.join(proxyConfDir, "haproxy.cfg"))).toBe(
       true,
@@ -109,16 +117,23 @@ describe("reload-haproxy command", () => {
       services: {
         haproxy: {
           container_name: "haproxy",
-          "x-ext-proxy": {name: "public"},
+          "x-ext-proxy": {
+            name: "public",
+            confDir: `$\{DATA_BASE_PATH}/conf/haproxy/public`,
+          },
         },
       },
     })
 
-    await reloadHaproxy(appsDir, {
-      name: "public",
-      containerName: "haproxy",
-      conf: proxyConfDir,
-    })
+    await reloadHaproxy(
+      appsDir,
+      {
+        name: "public",
+        containerName: "haproxy",
+        confDir: proxyConfDir,
+      },
+      rootConfDir,
+    )
 
     expect(await fsAdaptor.exists(path.join(proxyConfDir, "haproxy.cfg"))).toBe(
       true,
@@ -128,28 +143,5 @@ describe("reload-haproxy command", () => {
       c.cmd.startsWith("docker kill -s HUP"),
     )
     expect(killCommand).toBeUndefined()
-  })
-
-  it("throws error when proxy discovered in apps is missing in cluster.yaml", async () => {
-    await createTestComposeFile(path.join(appsDir, "haproxy.yaml"), {
-      services: {
-        haproxy: {
-          container_name: "haproxy",
-          "x-ext-proxy": {name: "unknown_proxy"},
-        },
-      },
-    })
-
-    await expect(
-      action({
-        rootConfDir: "/test/cluster",
-        secretsFile: "/test/cluster/secrets.encrypted.yaml",
-        appsDir,
-        proxies: [],
-        environment: {},
-      }),
-    ).rejects.toThrow(
-      /Proxy unknown_proxy missing configuration in cluster.yaml/,
-    )
   })
 })

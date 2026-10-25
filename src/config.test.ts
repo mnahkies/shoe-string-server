@@ -19,18 +19,7 @@ describe("resolveConfig", () => {
   it("resolves config with default secretsFile location in dataDir", async () => {
     const dataDir = "/test/cluster"
     const secretsFile = "/test/cluster/secrets.encrypted.yaml"
-    await fsAdaptor.writeFile(
-      "/test/cluster/cluster.yaml",
-      `
-proxies:
-  - name: internal
-    containerName: haproxy-internal
-    conf: conf/haproxy/internal
-  - name: public
-    containerName: haproxy-public
-    conf: conf/haproxy/public
-`,
-    )
+    await fsAdaptor.writeFile("/test/cluster/cluster.yaml", "{}\n")
     await fsAdaptor.writeFile(secretsFile, "dummy")
     await fsAdaptor.mkdir("/test/cluster/applications", {recursive: true})
     await fsAdaptor.mkdir("/test/cluster/conf/haproxy/internal", {
@@ -45,11 +34,6 @@ proxies:
     expect(config.rootConfDir).toBe(dataDir)
     expect(config.secretsFile).toBe(secretsFile)
     expect(config.appsDir).toBe("/test/cluster/applications")
-    expect(config.proxies.map((it) => it.name)).toEqual(["internal", "public"])
-    const [internal] = config.proxies
-    expect(internal?.containerName).toBe("haproxy-internal")
-    expect(internal?.conf).toBe("/test/cluster/conf/haproxy/internal")
-    expect(config.proxies[1]?.conf).toBe("/test/cluster/conf/haproxy/public")
   })
 
   it("resolves custom secretsFile location", async () => {
@@ -117,30 +101,6 @@ proxies:
       resolveConfig({dataDir, secretsFile: undefined}),
     ).rejects.toThrow(
       `appsDir must exist, got: ${path.resolve(dataDir, "applications")}`,
-    )
-  })
-
-  it("throws error when proxy.conf does not exist", async () => {
-    const dataDir = "/test/cluster"
-    await fsAdaptor.writeFile(
-      "/test/cluster/cluster.yaml",
-      `
-proxies:
-  - name: public
-    containerName: haproxy
-    conf: conf/haproxy
-`,
-    )
-    await fsAdaptor.writeFile(
-      path.join(dataDir, "secrets.encrypted.yaml"),
-      "dummy",
-    )
-    await fsAdaptor.mkdir("/test/cluster/applications")
-
-    await expect(
-      resolveConfig({dataDir, secretsFile: undefined}),
-    ).rejects.toThrow(
-      `proxy.conf must exist, got: ${path.resolve(dataDir, "conf/haproxy")}`,
     )
   })
 

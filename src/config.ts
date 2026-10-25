@@ -8,17 +8,10 @@ export type GlobalOptions = {
   secretsFile: string | undefined
 }
 
-export interface ProxyConfig {
-  name: string
-  containerName: string
-  conf: string
-}
-
 export interface ServerConfig {
   rootConfDir: string
   secretsFile: string
   appsDir: string
-  proxies: ProxyConfig[]
   environment: Record<string, string>
 }
 
@@ -26,18 +19,6 @@ const clusterConfigSchema = z
   .object({
     appsDir: z.string().optional().default("applications"),
     secretsFile: z.string().optional().default("secrets.encrypted.yaml"),
-    proxies: z
-      .array(
-        z
-          .object({
-            name: z.string().min(1),
-            containerName: z.string(),
-            conf: z.string(),
-          })
-          .strict(),
-      )
-      .optional()
-      .default([]),
     environment: z.record(z.string(), z.string()).optional().default({}),
   })
   .strict()
@@ -98,25 +79,10 @@ export async function resolveConfig(
     throw new Error(`appsDir must exist, got: ${appsDir}`)
   }
 
-  const proxies: ProxyConfig[] = config.proxies.map((it) => {
-    return {
-      name: it.name,
-      containerName: it.containerName,
-      conf: resolvePath(rootConfDir, it.conf),
-    }
-  })
-
-  for (const proxy of proxies) {
-    if (!(await fs.exists(proxy.conf))) {
-      throw new Error(`proxy.conf must exist, got: ${proxy.conf}`)
-    }
-  }
-
   return {
     rootConfDir,
     secretsFile,
     appsDir,
-    proxies,
     environment: config.environment,
   }
 }

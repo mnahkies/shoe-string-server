@@ -3,6 +3,7 @@ import type {DeepReadonly} from "ts-essentials"
 import {$} from "zx"
 import type {ExtendedService} from "../../types/docker-compose-extensions.ts"
 import {getFsAdaptor} from "../file-system/fs-adaptor.ts"
+import {resolveRootConfPath} from "../file-system/fs-utils.ts"
 import {forEachComposeService} from "./compose-files.ts"
 
 export interface BindMountSource {
@@ -40,8 +41,7 @@ export function resolveVolumeSource(
     throw new Error("volume missing source")
   }
 
-  // biome-ignore lint/suspicious/noTemplateCurlyInString: intentional placeholder in compose files
-  return it.source.replace("${DATA_BASE_PATH}", rootConfDir)
+  return resolveRootConfPath(it.source, rootConfDir)
 }
 
 export function getDataVolumes(

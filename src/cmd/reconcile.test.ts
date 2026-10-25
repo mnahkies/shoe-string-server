@@ -94,7 +94,6 @@ describe("reconcile command", () => {
     rootConfDir,
     secretsFile: path.join(rootConfDir, "secrets.encrypted.yaml"),
     appsDir: path.join(rootConfDir, "applications"),
-    proxies: [],
     environment: {},
   }
 

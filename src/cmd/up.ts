@@ -34,13 +34,7 @@ export async function generateAllProxyConfigs(
   const proxies = await discoverProxies(config.appsDir)
 
   for (const proxy of proxies) {
-    const proxyConfig = config.proxies.find((it) => it.name === proxy.name)
-
-    if (!proxyConfig) {
-      throw new Error(`Proxy '${proxy.name}' not found in cluster config`)
-    }
-
-    await generateHaproxyConfig(config.appsDir, proxyConfig)
+    await generateHaproxyConfig(config.appsDir, proxy, config.rootConfDir)
   }
 }
 
@@ -58,13 +52,7 @@ export async function reloadAffectedProxies(
   )
 
   for (const proxy of affected) {
-    const proxyConfig = config.proxies.find((it) => it.name === proxy.name)
-
-    if (!proxyConfig) {
-      throw new Error(`Proxy '${proxy.name}' not found in cluster config`)
-    }
-
-    await reloadHaproxy(config.appsDir, proxyConfig)
+    await reloadHaproxy(config.appsDir, proxy, config.rootConfDir)
   }
 }
 
