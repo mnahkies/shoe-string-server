@@ -76,7 +76,6 @@ describe("load-secrets command", () => {
       rootConfDir: "/test/cluster",
       secretsFile: "/test/cluster/secrets.encrypted.yaml",
       appsDir: "/test/cluster/applications",
-      proxies: [],
       environment: {},
     }
 

@@ -14,7 +14,6 @@ const mockConfig: ServerConfig = {
   rootConfDir: "/dummy",
   secretsFile: "/dummy/secrets.yaml",
   appsDir: "/dummy/applications",
-  proxies: [],
   environment: {},
 }
 

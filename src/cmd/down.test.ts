@@ -88,7 +88,6 @@ describe("down command", () => {
       rootConfDir: "/dummy",
       secretsFile: "/dummy/secrets.yaml",
       appsDir,
-      proxies: [],
       environment: {CUSTOM_ENV: "hello"},
     })
 
@@ -119,7 +118,6 @@ describe("down command", () => {
         rootConfDir: "/dummy",
         secretsFile: "/dummy/secrets.yaml",
         appsDir,
-        proxies: [],
         environment: {},
       },
       {
@@ -149,7 +147,6 @@ describe("down command", () => {
           rootConfDir: "/dummy",
           secretsFile: "/dummy/secrets.yaml",
           appsDir,
-          proxies: [],
           environment: {},
         },
         {targets: ["nonexistent"]},
@@ -169,7 +166,6 @@ describe("down command", () => {
       rootConfDir: "/dummy",
       secretsFile: "/dummy/secrets.yaml",
       appsDir,
-      proxies: [],
       environment: {},
     })
 
@@ -195,7 +191,6 @@ describe("down command", () => {
         rootConfDir: "/dummy",
         secretsFile: "/dummy/secrets.yaml",
         appsDir,
-        proxies: [],
         environment: {},
       },
       {targets: ["api"]},
@@ -223,7 +218,6 @@ describe("down command", () => {
       rootConfDir,
       secretsFile: path.join(rootConfDir, "secrets.yaml"),
       appsDir,
-      proxies: [],
       environment: {},
     })
 

@@ -112,13 +112,6 @@ describe("up command", () => {
     rootConfDir,
     secretsFile: path.join(rootConfDir, "secrets.yaml"),
     appsDir,
-    proxies: [
-      {
-        name: "public",
-        containerName: "haproxy",
-        conf: proxyConfDir,
-      },
-    ],
     environment: {CUSTOM_VAR: "cluster_val"},
   }
 
@@ -146,7 +139,10 @@ describe("up command", () => {
         services: {
           haproxy: {
             container_name: "haproxy",
-            "x-ext-proxy": {name: "public"},
+            "x-ext-proxy": {
+              name: "public",
+              confDir: `$\{DATA_BASE_PATH}/conf/haproxy`,
+            },
           },
         },
       },
@@ -199,7 +195,11 @@ describe("up command", () => {
       services: {
         haproxy: {
           container_name: "haproxy",
-          "x-ext-proxy": {name: "public"},
+
+          "x-ext-proxy": {
+            name: "public",
+            confDir: `$\{DATA_BASE_PATH}/conf/haproxy`,
+          },
         },
       },
     })

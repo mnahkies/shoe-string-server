@@ -45,11 +45,6 @@ proxies:
     expect(config.rootConfDir).toBe(dataDir)
     expect(config.secretsFile).toBe(secretsFile)
     expect(config.appsDir).toBe("/test/cluster/applications")
-    expect(config.proxies.map((it) => it.name)).toEqual(["internal", "public"])
-    const [internal] = config.proxies
-    expect(internal?.containerName).toBe("haproxy-internal")
-    expect(internal?.conf).toBe("/test/cluster/conf/haproxy/internal")
-    expect(config.proxies[1]?.conf).toBe("/test/cluster/conf/haproxy/public")
   })
 
   it("resolves custom secretsFile location", async () => {

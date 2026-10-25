@@ -397,11 +397,14 @@ describe("generateHaproxyConfig", () => {
       "{{TCP_LISTEN}}\n\nfrontend main\n{{FORWARD_AUTH_ACL}}\n{{USE_BACKENDS}}\n\n{{BACKENDS}}\n",
     )
 
-    await generateHaproxyConfig(appsDir, {
-      name: "internal",
-      containerName: "internal",
-      conf: proxyDir,
-    })
+    await generateHaproxyConfig(
+      appsDir,
+      {
+        name: "internal",
+        confDir: proxyDir,
+      },
+      "/tmp/some/path",
+    )
 
     const generatedPath = path.join(proxyDir, "haproxy.cfg")
     expect(await fsAdaptor.exists(generatedPath)).toBe(true)
@@ -425,11 +428,14 @@ describe("generateHaproxyConfig", () => {
     )
 
     await expect(
-      generateHaproxyConfig(appsDir, {
-        name: "internal",
-        containerName: "internal",
-        conf: proxyDir,
-      }),
+      generateHaproxyConfig(
+        appsDir,
+        {
+          name: "internal",
+          confDir: proxyDir,
+        },
+        "/tmp/some/path",
+      ),
     ).rejects.toThrow(/missing required placeholder '\{\{TCP_LISTEN\}\}'/)
   })
 
@@ -440,11 +446,14 @@ describe("generateHaproxyConfig", () => {
     )
 
     await expect(
-      generateHaproxyConfig(appsDir, {
-        name: "internal",
-        containerName: "internal",
-        conf: proxyDir,
-      }),
+      generateHaproxyConfig(
+        appsDir,
+        {
+          name: "internal",
+          confDir: proxyDir,
+        },
+        "/tmp/some/path",
+      ),
     ).rejects.toThrow(/contains duplicate placeholder '\{\{TCP_LISTEN\}\}'/)
   })
 
@@ -470,21 +479,27 @@ describe("generateHaproxyConfig", () => {
     )
 
     await expect(
-      generateHaproxyConfig(appsDir, {
-        name: "internal",
-        containerName: "internal",
-        conf: proxyDir,
-      }),
+      generateHaproxyConfig(
+        appsDir,
+        {
+          name: "internal",
+          confDir: proxyDir,
+        },
+        "/tmp/some/path",
+      ),
     ).rejects.toThrow()
   })
 
   it("throws error when haproxy.cfg.template is missing", async () => {
     await expect(
-      generateHaproxyConfig(appsDir, {
-        name: "internal",
-        containerName: "internal",
-        conf: proxyDir,
-      }),
+      generateHaproxyConfig(
+        appsDir,
+        {
+          name: "internal",
+          confDir: proxyDir,
+        },
+        "/tmp/some/path",
+      ),
     ).rejects.toThrow(/Template file not found/)
   })
 })

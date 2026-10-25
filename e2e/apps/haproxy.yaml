@@ -13,11 +13,12 @@ services:
       - label:level:s0:c100,c200,c202
     x-ext-proxy:
       name: public
+      confDir: ${DATA_BASE_PATH}/conf/haproxy
     networks:
       - main
     ports:
-      - "${PUBLIC_IP}:${PUBLIC_HTTP_PORT}:8000"
-      - "${PUBLIC_IP}:${PUBLIC_HTTPS_PORT}:4430"
+      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:4430:4430"
     ulimits:
       nofile: 10240
     volumes:

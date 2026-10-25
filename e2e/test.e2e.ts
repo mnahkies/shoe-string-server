@@ -17,7 +17,7 @@ const TEST_DIR = path.resolve(ROOT_DIR, "e2e")
 const WRITE_FILE_PATH = path.resolve(TEST_DIR, "data", "hello", "write.txt")
 const SECRETS_FILE_PATH = path.resolve(TEST_DIR, "secrets.encrypted.yaml")
 const HAPROXY_CERT_PATH = path.resolve(TEST_DIR, "data", "haproxy", "invalid")
-const BASE_URL = `http://127.0.0.1:8080`
+const BASE_URL = `http://127.0.0.1:8000`
 const TEST_HOST = "hello.test"
 
 async function generateTestSecrets(): Promise<{

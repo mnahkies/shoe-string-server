@@ -41,6 +41,7 @@ export interface ExtHostnameConfig {
 export type ExtProxyMark = {
   /** the name services should use to bind to this proxy */
   name: string
+  confDir: string
 }
 
 export interface ExtendedService extends Service {
@@ -78,7 +79,10 @@ export const extTcpPortSchema = z.object({
   "proxy-name": z.string(),
 })
 
-export const extProxyMarkSchema = z.object({name: z.string()})
+export const extProxyMarkSchema = z.object({
+  name: z.string(),
+  confDir: z.string(),
+})
 
 export const minimalServiceSchema = z.looseObject({
   image: z.string().optional(),
