@@ -117,3 +117,123 @@ export const minimalComposeSchema = z.looseObject({
     .optional(),
   "x-requires": z.array(z.string()).default([]),
 })
+
+// The JSON schema doesn't use $ref as much as it could, this is a manual naming of the generated schema
+
+export type ContainerSpecVolume = {
+  /**
+   * The mount type: bind for mounting host directories, volume for named volumes, tmpfs for temporary filesystems, cluster for cluster volumes, npipe for named pipes, or image for mounting from an image.
+   */
+  type: "bind" | "volume" | "tmpfs" | "cluster" | "npipe" | "image"
+  /**
+   * The source of the mount, a path on the host for a bind mount, a docker image reference for an image mount, or the name of a volume defined in the top-level volumes key. Not applicable for a tmpfs mount.
+   */
+  source: string
+  /**
+   * The path in the container where the volume is mounted.
+   */
+  target: string
+  /**
+   * Flag to set the volume as read-only.
+   */
+  read_only?: boolean | string
+  /**
+   * The consistency requirements for the mount. Available values are platform specific.
+   */
+  consistency?: string
+  /**
+   * Configuration specific to bind mounts.
+   */
+  bind?: {
+    /**
+     * The propagation mode for the bind mount: 'shared', 'slave', 'private', 'rshared', 'rslave', or 'rprivate'.
+     */
+    propagation?: string
+    /**
+     * Create the host path if it doesn't exist.
+     */
+    create_host_path?: boolean | string
+    /**
+     * Recursively mount the source directory.
+     */
+    recursive?: "enabled" | "disabled" | "writable" | "readonly"
+    /**
+     * SELinux relabeling options: 'z' for shared content, 'Z' for private unshared content.
+     */
+    selinux?: "z" | "Z"
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` "^x-".
+     */
+    [k: string]: unknown
+  }
+  /**
+   * Configuration specific to volume mounts.
+   */
+  volume?: {
+    /**
+     * Either a dictionary mapping keys to values, or a list of strings.
+     */
+    labels?:
+      | {
+          /**
+           * Value for the key, which can be a string, number, boolean, or null.
+           *
+           * This interface was referenced by `undefined`'s JSON-Schema definition
+           * via the `patternProperty` ".+".
+           */
+          [k: string]: string | number | boolean | null
+        }
+      | string[]
+    /**
+     * Flag to disable copying of data from a container when a volume is created.
+     */
+    nocopy?: boolean | string
+    /**
+     * Path within the volume to mount instead of the volume root.
+     */
+    subpath?: string
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` "^x-".
+     */
+    [k: string]: unknown
+  }
+  /**
+   * Configuration specific to tmpfs mounts.
+   */
+  tmpfs?: {
+    /**
+     * Size of the tmpfs mount in bytes.
+     */
+    size?: number | string
+    /**
+     * File mode of the tmpfs in octal.
+     */
+    mode?: number | string
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` "^x-".
+     */
+    [k: string]: unknown
+  }
+  /**
+   * Configuration specific to image mounts.
+   */
+  image?: {
+    /**
+     * Path within the image to mount instead of the image root.
+     */
+    subpath?: string
+    /**
+     * This interface was referenced by `undefined`'s JSON-Schema definition
+     * via the `patternProperty` "^x-".
+     */
+    [k: string]: unknown
+  }
+  /**
+   * This interface was referenced by `undefined`'s JSON-Schema definition
+   * via the `patternProperty` "^x-".
+   */
+  [k: string]: unknown
+}

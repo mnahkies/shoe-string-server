@@ -29,6 +29,7 @@ The following commands are already implemented:
 
 * `up` - starts the cluster
 * `down` - stops the cluster
+* `init` - interactive setup wizard for a new cluster: data directory skeleton, `cluster.yaml`, proxy compose files and HAProxy config templates; installable applications are gathered through the application registry (currently the optional hello-world example)
 * `reconcile` - reconciles the cluster with conf repo state
 * `reload-proxy` - regenerates proxy config and signals haproxy containers
 * `secrets` - decrypts secrets using sops/age
@@ -36,7 +37,7 @@ The following commands are already implemented:
 
 ### Rough Roadmap
 
-* `init` command / pre-defined application library
+* Expand the pre-defined application library; registry-backed installation prompts are implemented, but `hello-world` is currently the only installable application
 * `lint` - static analysis of the configuration repo, checking volumes and secrets references all resolve, etc
 * HAProxy conf template could be further cleaned up / abstracted
 * `docker` / `docker-compose` compatibility testing
@@ -61,19 +62,18 @@ Example:
 ```shell
 ├── applications
 |   ├── example.yaml
-|   ├── haproxy-internal.yaml
-|   └── haproxy-public.yaml
+|   ├── internal.yaml
+|   └── public.yaml
 ├── conf
 |   ├── example
 |   |   └── whatever.yaml
-|   ├── haproxy
-|       ├── internal
-|       |   ├── directory.html
-|       |   ├── haproxy.cfg
-|       |   └── haproxy.cfg.template
-|       └── public
-|           ├── haproxy.cfg
-|           └── haproxy.cfg.template
+|   ├── haproxy-internal
+|   |   ├── directory.html
+|   |   ├── haproxy.cfg
+|   |   └── haproxy.cfg.template
+|   ├── haproxy-public
+|       ├── haproxy.cfg
+|       └── haproxy.cfg.template
 ├── data
 |   ├── example
 |       └── whatever.sqlite
