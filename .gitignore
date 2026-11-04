@@ -6,3 +6,4 @@ node_modules
 dist
 e2e/secrets.encrypted.yaml
 e2e/data/haproxy/invalid.*
+/.pnpm-store

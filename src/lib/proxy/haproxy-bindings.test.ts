@@ -29,6 +29,7 @@ describe("discoverProxies", () => {
           "x-ext-proxy": {
             name: "internal",
             confDir: `$\{DATA_BASE_PATH}/conf/haproxy/internal`,
+            kind: "internal",
           },
         },
       },
@@ -42,6 +43,7 @@ describe("discoverProxies", () => {
         containerName: "haproxy-internal",
         appsFile: path.join(dir, "haproxy-internal.yaml"),
         confDir: `$\{DATA_BASE_PATH}/conf/haproxy/internal`,
+        kind: "internal",
         serviceName: "haproxy-internal",
       },
     ])
@@ -71,6 +73,7 @@ describe("discoverProxies", () => {
           "x-ext-proxy": {
             name: "edge",
             confDir: `$\{DATA_BASE_PATH}/conf/haproxy/edge`,
+            kind: "public",
           },
         },
       },
@@ -103,6 +106,7 @@ describe("discoverProxies", () => {
           "x-ext-proxy": {
             name: "public",
             confDir: `$\{DATA_BASE_PATH}/conf/haproxy/public`,
+            kind: "public",
           },
         },
       },
@@ -114,6 +118,7 @@ describe("discoverProxies", () => {
           "x-ext-proxy": {
             name: "public",
             confDir: `$\{DATA_BASE_PATH}/conf/haproxy/public`,
+            kind: "public",
           },
         },
       },
@@ -132,6 +137,7 @@ describe("discoverProxies", () => {
           "x-ext-proxy": {
             name: "proxy1",
             confDir: `$\{DATA_BASE_PATH}/conf/haproxy/proxy1`,
+            kind: "public",
           },
         },
       },
@@ -143,6 +149,7 @@ describe("discoverProxies", () => {
           "x-ext-proxy": {
             name: "proxy2",
             confDir: `$\{DATA_BASE_PATH}/conf/haproxy/proxy2`,
+            kind: "public",
           },
         },
       },

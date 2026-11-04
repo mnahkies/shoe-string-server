@@ -142,6 +142,7 @@ describe("up command", () => {
             "x-ext-proxy": {
               name: "public",
               confDir: `$\{DATA_BASE_PATH}/conf/haproxy`,
+              kind: "public",
             },
           },
         },
@@ -199,6 +200,7 @@ describe("up command", () => {
           "x-ext-proxy": {
             name: "public",
             confDir: `$\{DATA_BASE_PATH}/conf/haproxy`,
+            kind: "public",
           },
         },
       },

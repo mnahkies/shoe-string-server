@@ -15,6 +15,7 @@ describe("registry/applications/haproxy", () => {
   it("generates an attached and discoverable proxy service", () => {
     const inputs = haproxy.inputs.parse({
       name: "internal",
+      kind: "internal",
       containerName: "haproxy-internal",
       networkName: "mesh-net",
       confDir: "./conf/haproxy/internal",
@@ -36,7 +37,7 @@ describe("registry/applications/haproxy", () => {
         internal: {
           container_name: "haproxy-internal",
           networks: ["mesh-net"],
-          "x-ext-proxy": {name: "internal"},
+          "x-ext-proxy": {name: "internal", kind: "internal"},
           ports: ["192.168.1.1:8080:80", "192.168.1.2:8443:443"],
           volumes: [
             {
@@ -99,6 +100,7 @@ describe("haproxy install wizard", () => {
     )
 
     await expect(wizard).resolves.toEqual({
+      kind: "public",
       name: "haproxy-public",
       containerName: "haproxy-public",
       confDir: "./conf/haproxy-public",
@@ -145,6 +147,7 @@ describe("haproxy install wizard", () => {
     })
 
     await expect(wizard).resolves.toEqual({
+      kind: "public",
       name: "edge",
       containerName: "haproxy-edge",
       confDir: "./conf/haproxy-edge",
@@ -193,6 +196,7 @@ describe("haproxy install wizard", () => {
     })
 
     await expect(wizard).resolves.toEqual({
+      kind: "internal",
       name: "haproxy-internal",
       containerName: "haproxy-haproxy-internal",
       confDir: "./conf/haproxy-haproxy-internal",
@@ -229,6 +233,7 @@ describe("haproxy install wizard", () => {
     )
 
     await expect(wizard).resolves.toEqual({
+      kind: "public",
       name: "haproxy-public",
       containerName: "haproxy-public",
       confDir: "./conf/haproxy-public",
@@ -247,7 +252,14 @@ describe("haproxy install wizard", () => {
       throw new Error("process.exit(0)")
     })
     const wizard = installWizard.wizard.run({
-      proxies: [{name: "public", externalHostnames: [], networkName: "public"}],
+      proxies: [
+        {
+          name: "public",
+          externalHostnames: [],
+          networkName: "public",
+          kind: "public",
+        },
+      ],
       detectPublicIp: async () => "203.0.113.7",
       detectPrivateIp: async () => "100.64.0.9",
     })

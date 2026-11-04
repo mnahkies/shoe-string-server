@@ -28,6 +28,7 @@ describe("init cluster scaffold", () => {
 
   const publicProxy: HaproxyInput = {
     name: "public",
+    kind: "public",
     containerName: "haproxy-public",
     confDir: "./conf/haproxy/public",
     ports: [
@@ -41,6 +42,7 @@ describe("init cluster scaffold", () => {
 
   const internalProxy: HaproxyInput = {
     name: "internal",
+    kind: "internal",
     containerName: "haproxy-internal",
     confDir: "./conf/haproxy/internal",
     ports: [
@@ -176,6 +178,7 @@ describe("init cluster scaffold", () => {
       expect(service?.["x-ext-proxy"]).toEqual({
         name: "public",
         confDir: `$\{DATA_BASE_PATH}/conf/haproxy/public`,
+        kind: "public",
       })
       expect(service?.networks).toEqual(["public"])
       expect(service?.ports).toEqual([

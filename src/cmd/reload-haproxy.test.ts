@@ -85,6 +85,7 @@ describe("reload-haproxy command", () => {
           "x-ext-proxy": {
             name: "public",
             confDir: `$\{DATA_BASE_PATH}/conf/haproxy/public`,
+            kind: "public",
           },
         },
       },
@@ -120,6 +121,7 @@ describe("reload-haproxy command", () => {
           "x-ext-proxy": {
             name: "public",
             confDir: `$\{DATA_BASE_PATH}/conf/haproxy/public`,
+            kind: "public",
           },
         },
       },

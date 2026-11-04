@@ -16,6 +16,7 @@ export type ApplicationWizardContext = {
     name: string
     externalHostnames: string[]
     networkName: string
+    kind: "internal" | "public"
   }[]
 }
 

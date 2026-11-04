@@ -16,6 +16,7 @@ import {
 } from "../registry/application-registry.ts"
 import "../registry/applications/hello-world.ts"
 import {type HaproxyInput, haproxy} from "../registry/applications/haproxy.ts"
+import "../registry/applications/postgres.ts"
 import {p} from "../tui/clack.prompts.ts"
 import {wizard} from "../tui/wizard.ts"
 import {detectPrivateIp, detectPublicIp} from "../util/ip-addresses.ts"
@@ -75,7 +76,9 @@ const initWizard = wizard<InitWizardContext>()
       ) {
         applications.push({
           application,
-          inputs: await installWizard.wizard.run({proxies}),
+          inputs: await installWizard.wizard.run({
+            proxies,
+          }),
         })
       }
     }

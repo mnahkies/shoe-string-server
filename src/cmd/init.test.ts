@@ -83,6 +83,7 @@ describe("init wizard", () => {
     await step(io, "hostname to route to the hello-world", (io) =>
       io.pressEnter(),
     )
+    await step(io, "Add a Postgres database?", (io) => io.type("n"))
 
     const answers = await wizard
     expect(answers).toMatchObject({
@@ -90,6 +91,7 @@ describe("init wizard", () => {
       proxies: [
         {
           name: "haproxy-public",
+          kind: "public",
           containerName: "haproxy-public",
           confDir: "./conf/haproxy-public",
           ports: [
@@ -102,6 +104,7 @@ describe("init wizard", () => {
         },
         {
           name: "haproxy-internal",
+          kind: "internal",
           containerName: "haproxy-internal",
           confDir: "./conf/haproxy-internal",
           ports: [
@@ -135,6 +138,7 @@ describe("init wizard", () => {
     await step(io, "Applications directory", (io) => io.pressEnter())
     await step(io, "Add Proxy?", (io) => io.type("n"))
     await step(io, "Add a hello-world application", (io) => io.type("n"))
+    await step(io, "Add a Postgres database?", (io) => io.type("n"))
 
     await expect(wizard).resolves.toMatchObject({
       appsDir: "applications",
@@ -222,6 +226,7 @@ describe("init wizard", () => {
     })
     await step(io, "Add another Proxy?", (io) => io.type("n"))
     await step(io, "Add a hello-world application", (io) => io.type("n"))
+    await step(io, "Add a Postgres database?", (io) => io.type("n"))
 
     const answers = await wizard
     expect(answers.proxies[0]?.ports[0]?.ip).toBe("203.0.113.7")
@@ -294,6 +299,7 @@ describe("init wizard", () => {
       io.type("whoami.example.com")
       io.pressEnter()
     })
+    await step(io, "Add a Postgres database?", (io) => io.type("n"))
 
     const answers = await wizard
     expect(answers).toMatchObject({
@@ -301,6 +307,7 @@ describe("init wizard", () => {
       proxies: [
         {
           name: "haproxy-public",
+          kind: "public",
           containerName: "haproxy-public",
           confDir: "./conf/haproxy-public",
           ports: [
@@ -379,6 +386,7 @@ describe("init action", () => {
     )
     await step(io, "Add another Proxy?", (io) => io.type("n"))
     await step(io, "Add a hello-world application", (io) => io.type("n"))
+    await step(io, "Add a Postgres database?", (io) => io.type("n"))
 
     await result
 
