@@ -36,6 +36,8 @@ export const haproxyInput = z.object({
   containerName: z.string(),
   networkName: z.string(),
   externalHostnames: z.array(z.string()),
+  kind: z.enum(["internal", "public"]),
+  // todo: most recent image / pin to sha
   image: z.string().default("docker.io/library/haproxy:3.4-alpine"),
   confDir: z.string(),
   ports: z.array(
@@ -226,6 +228,7 @@ export const haproxy = applicationRegistry.defineApplication({
       .transform((answers) => {
         return {
           name: answers.name,
+          kind: answers.kind,
           containerName: answers.containerName ?? answers.name,
           confDir: answers.confDir ?? `./conf/${answers.name}`,
           networkName: answers.networkName ?? answers.name,
@@ -288,6 +291,7 @@ export const haproxy = applicationRegistry.defineApplication({
             "x-ext-proxy": {
               name: it.name,
               confDir: confVolume.source,
+              kind: it.kind,
             },
             networks: [it.networkName],
             user: "99:99",

@@ -5,7 +5,10 @@ import {
   type PromptTestIo,
 } from "../../tui/clack.prompts.test-harness.ts"
 import {resetPromptIo, setPromptIo} from "../../tui/clack.prompts.ts"
-import {applicationRegistry} from "../application-registry.ts"
+import {
+  type ApplicationWizardContext,
+  applicationRegistry,
+} from "../application-registry.ts"
 import {helloWorld} from "./hello-world.ts"
 
 describe("registry/applications/hello-world", () => {
@@ -64,9 +67,19 @@ describe("registry/applications/hello-world", () => {
       resetPromptIo()
     })
 
-    const proxies = [
-      {name: "public", networkName: "public", externalHostnames: []},
-      {name: "internal", networkName: "mesh-net", externalHostnames: []},
+    const proxies: ApplicationWizardContext["proxies"] = [
+      {
+        name: "public",
+        networkName: "public",
+        externalHostnames: [],
+        kind: "public",
+      },
+      {
+        name: "internal",
+        networkName: "mesh-net",
+        externalHostnames: [],
+        kind: "internal",
+      },
     ]
 
     async function step(
