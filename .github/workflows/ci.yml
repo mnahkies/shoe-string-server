@@ -4,7 +4,6 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 permissions:
   contents: read
@@ -58,7 +57,7 @@ jobs:
 
       - name: Fail if trivy-scan failed
         if: steps.trivy-scan.outcome == 'failure'
-        run: exit 1
+        run: mise run trivy
 
   build:
     name: build
@@ -84,7 +83,7 @@ jobs:
       - run: pnpm run build
 
       - run: pnpm run test:unit
-        # TODO: figure out running e2e tests in ci
-        # - run: pnpm run test:e2e
+
+      - run: pnpm run test:e2e
 
       - run: pnpm run lint:ci
