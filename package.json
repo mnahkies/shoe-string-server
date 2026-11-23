@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@bomb.sh/tab": "^0.0.22",
-    "@clack/prompts": "^1.8.0",
+    "@clack/prompts": "^1.8.1",
     "commander": "^15.0.0",
     "eta": "^4.6.0",
     "js-yaml": "^5.4.1",
